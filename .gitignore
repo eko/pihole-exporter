@@ -1,0 +1,7 @@
+search-api
+bin
+tmp
+.vscode
+report.xml
+debug
+.idea/
