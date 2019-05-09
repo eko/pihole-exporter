@@ -8,6 +8,8 @@ This is a Prometheus exporter for [PI-Hole](https://pi-hole.net/)'s Raspberry PI
 
 ![Grafana dashboard](https://raw.githubusercontent.com/eko/pihole-exporter/master/dashboard.jpg)
 
+Grafana dashboard is [available here](https://grafana.com/dashboards/10176).
+
 ## Prerequisites
 
 * [Go](https://golang.org/doc/)
