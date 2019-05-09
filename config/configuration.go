@@ -27,7 +27,7 @@ func getDefaultConfig() *Config {
 		PIHolePassword: "",
 
 		Port:     "9311",
-		Interval: 5 * time.Second,
+		Interval: 10 * time.Second,
 	}
 }
 

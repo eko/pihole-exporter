@@ -1,0 +1,42 @@
+language: go
+matrix:
+  include:
+    - go: 1.x
+      env: LATEST=true
+    - go: 1.8.x
+    - go: 1.9.x
+    - go: 1.10.x
+    - go: 1.11.x
+    - go: 1.12.x
+    - go: tip
+  allow_failures:
+    - go: tip
+
+before_install:
+  - go get github.com/mitchellh/gox
+
+install:
+  - export GO111MODULE=on
+  - go get -t -v ./...
+
+script:
+  - go test -v -race ./...
+  - if [ "${LATEST}" = "true" ]; then gox -os="linux darwin windows" -arch="386 amd64" -osarch="linux/arm" -output="pihole_exporter-{{.OS}}-{{.Arch}}"  -verbose ./...; fi
+
+deploy:
+  provider: releases
+  skip_cleanup: true
+  api_key:
+    secure: $GITHUB_TOKEN
+  file:
+    - pihole_exporter-windows-386.exe
+    - pihole_exporter-windows-amd64.exe
+    - pihole_exporter-darwin-386
+    - pihole_exporter-darwin-amd64
+    - pihole_exporter-linux-386
+    - pihole_exporter-linux-amd64
+    - pihole_exporter-linux-arm
+  on:
+    repo: eko/pihole-exporter
+    tags: true
+    condition: $LATEST = true
