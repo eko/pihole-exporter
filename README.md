@@ -6,6 +6,8 @@
 
 This is a Prometheus exporter for [PI-Hole](https://pi-hole.net/)'s Raspberry PI ad blocker.
 
+![Grafana dashboard](https://raw.githubusercontent.com/eko/pihole-exporter/master/dashboard.jpg)
+
 ## Prerequisites
 
 * [Go](https://golang.org/doc/)
@@ -14,7 +16,7 @@ This is a Prometheus exporter for [PI-Hole](https://pi-hole.net/)'s Raspberry PI
 
 ### Download binary
 
-You can also download the latest version of the binary built for your architecture here:
+You can download the latest version of the binary built for your architecture here:
 
 * Architecture **i386** [
     [Darwin](https://github.com/eko/pihole-exporter/releases/latest/download/pihole_exporter-darwin-386) /
@@ -32,7 +34,7 @@ You can also download the latest version of the binary built for your architectu
 
 ### From sources
 
-First, you have to retrieve the project sources by using one of the following way:
+Optionally, you can download and build it from the sources. You have to retrieve the project sources by using one of the following way:
 ```bash
 $ go get -u github.com/eko/pihole-exporter
 # or
