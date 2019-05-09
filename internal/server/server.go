@@ -9,10 +9,13 @@ import (
 	"golang.org/x/net/context"
 )
 
+// Server is the struct for the HTTP server.
 type Server struct {
 	httpServer *http.Server
 }
 
+// NewServer method initializes a new HTTP server instance and associates
+// the different routes that will be used by Prometheus (metrics) or for monitoring (readiness, liveness).
 func NewServer(port string) *Server {
 	mux := http.NewServeMux()
 	httpServer := &http.Server{Addr: ":" + port, Handler: mux}
@@ -28,6 +31,7 @@ func NewServer(port string) *Server {
 	return s
 }
 
+// ListenAndServe method serves HTTP requests.
 func (s *Server) ListenAndServe() {
 	log.Println("Starting HTTP server")
 
@@ -37,6 +41,7 @@ func (s *Server) ListenAndServe() {
 	}
 }
 
+// Stop method stops the HTTP server (so the exporter become unavailable).
 func (s *Server) Stop() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()

@@ -20,6 +20,7 @@ var (
 	statsURLPattern = "http://%s/admin/api.php?summaryRaw&overTimeData&topItems&recentItems&getQueryTypes&getForwardDestinations&getQuerySources&jsonForceObject"
 )
 
+// Client struct is a PI-Hole client to request an instance of a PI-Hole ad blocker.
 type Client struct {
 	hostname   string
 	password   string
@@ -27,6 +28,7 @@ type Client struct {
 	httpClient http.Client
 }
 
+// NewClient method initializes a new PI-Hole client.
 func NewClient(hostname, password string, interval time.Duration) *Client {
 	return &Client{
 		hostname: hostname,
@@ -40,7 +42,9 @@ func NewClient(hostname, password string, interval time.Duration) *Client {
 	}
 }
 
-func (c *Client) Fetch() {
+// Scrape method logins and retrieves statistics from PI-Hole JSON API
+// and then pass them as Prometheus metrics.
+func (c *Client) Scrape() {
 	for range time.Tick(c.interval) {
 		sessionID := c.getPHPSessionID()
 		if sessionID == nil {
@@ -49,19 +53,53 @@ func (c *Client) Fetch() {
 		}
 
 		stats := c.getStatistics(*sessionID)
+		c.setMetrics(stats)
 
-		log.Println("New tick of statistics", stats)
+		log.Printf("New tick of statistics: %s", stats.ToString())
+	}
+}
 
-		metrics.DomainsBlocked.Set(float64(stats.DomainsBeingBlocked))
-		metrics.DNSQueriesToday.Set(float64(stats.DNSQueriesToday))
-		metrics.AdsBlockedToday.Set(float64(stats.AdsBlockedToday))
-		metrics.AdsPercentageToday.Set(float64(stats.AdsPercentageToday))
-		metrics.UniqueDomains.Set(float64(stats.UniqueDomains))
-		metrics.QueriesForwarded.Set(float64(stats.QueriesForwarded))
-		metrics.QueriesCached.Set(float64(stats.QueriesCached))
-		metrics.ClientsEverSeen.Set(float64(stats.ClientsEverSeen))
-		metrics.UniqueClients.Set(float64(stats.UniqueClients))
-		metrics.DnsQueriesAllTypes.Set(float64(stats.DnsQueriesAllTypes))
+func (c *Client) setMetrics(stats *Stats) {
+	metrics.DomainsBlocked.WithLabelValues(c.hostname).Set(float64(stats.DomainsBeingBlocked))
+	metrics.DNSQueriesToday.WithLabelValues(c.hostname).Set(float64(stats.DNSQueriesToday))
+	metrics.AdsBlockedToday.WithLabelValues(c.hostname).Set(float64(stats.AdsBlockedToday))
+	metrics.AdsPercentageToday.WithLabelValues(c.hostname).Set(float64(stats.AdsPercentageToday))
+	metrics.UniqueDomains.WithLabelValues(c.hostname).Set(float64(stats.UniqueDomains))
+	metrics.QueriesForwarded.WithLabelValues(c.hostname).Set(float64(stats.QueriesForwarded))
+	metrics.QueriesCached.WithLabelValues(c.hostname).Set(float64(stats.QueriesCached))
+	metrics.ClientsEverSeen.WithLabelValues(c.hostname).Set(float64(stats.ClientsEverSeen))
+	metrics.UniqueClients.WithLabelValues(c.hostname).Set(float64(stats.UniqueClients))
+	metrics.DNSQueriesAllTypes.WithLabelValues(c.hostname).Set(float64(stats.DNSQueriesAllTypes))
+
+	metrics.Reply.WithLabelValues(c.hostname, "no_data").Set(float64(stats.ReplyNoData))
+	metrics.Reply.WithLabelValues(c.hostname, "nx_domain").Set(float64(stats.ReplyNxDomain))
+	metrics.Reply.WithLabelValues(c.hostname, "cname").Set(float64(stats.ReplyCname))
+	metrics.Reply.WithLabelValues(c.hostname, "ip").Set(float64(stats.ReplyIP))
+
+	var isEnabled int = 0
+	if stats.Status == enabledStatus {
+		isEnabled = 1
+	}
+	metrics.Status.WithLabelValues(c.hostname).Set(float64(isEnabled))
+
+	for domain, value := range stats.TopQueries {
+		metrics.TopQueries.WithLabelValues(c.hostname, domain).Set(float64(value))
+	}
+
+	for domain, value := range stats.TopAds {
+		metrics.TopAds.WithLabelValues(c.hostname, domain).Set(float64(value))
+	}
+
+	for source, value := range stats.TopSources {
+		metrics.TopSources.WithLabelValues(c.hostname, source).Set(float64(value))
+	}
+
+	for destination, value := range stats.ForwardDestinations {
+		metrics.ForwardDestinations.WithLabelValues(c.hostname, destination).Set(value)
+	}
+
+	for queryType, value := range stats.QueryTypes {
+		metrics.QueryTypes.WithLabelValues(c.hostname, queryType).Set(value)
 	}
 }
 

@@ -13,6 +13,7 @@ import (
 	"github.com/heetch/confita/backend/flags"
 )
 
+// Config is the exporter CLI configuration.
 type Config struct {
 	PIHoleHostname string `config:"pihole_hostname"`
 	PIHolePassword string `config:"pihole_password"`
@@ -31,6 +32,7 @@ func getDefaultConfig() *Config {
 	}
 }
 
+// Load method loads the configuration by using both flag or environment variables.
 func Load() *Config {
 	loaders := []backend.Backend{
 		env.NewBackend(),

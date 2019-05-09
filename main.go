@@ -34,7 +34,7 @@ func main() {
 
 func initPiholeClient(hostname, password string, interval time.Duration) {
 	client := pihole.NewClient(hostname, password, interval)
-	go client.Fetch()
+	go client.Scrape()
 }
 
 func initHttpServer(port string) {
