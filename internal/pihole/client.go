@@ -22,10 +22,11 @@ var (
 
 // Client struct is a PI-Hole client to request an instance of a PI-Hole ad blocker.
 type Client struct {
+	httpClient http.Client
+	interval   time.Duration
 	hostname   string
 	password   string
-	interval   time.Duration
-	httpClient http.Client
+	sessionID  string
 }
 
 // NewClient method initializes a new PI-Hole client.
@@ -46,13 +47,11 @@ func NewClient(hostname, password string, interval time.Duration) *Client {
 // and then pass them as Prometheus metrics.
 func (c *Client) Scrape() {
 	for range time.Tick(c.interval) {
-		sessionID := c.getPHPSessionID()
-		if sessionID == nil {
-			log.Println("Unable to retrieve session identifier")
-			return
+		if c.isAuthenticated() {
+			c.sessionID = c.getPHPSessionID()
 		}
 
-		stats := c.getStatistics(*sessionID)
+		stats := c.getStatistics()
 		c.setMetrics(stats)
 
 		log.Printf("New tick of statistics: %s", stats.ToString())
@@ -103,9 +102,7 @@ func (c *Client) setMetrics(stats *Stats) {
 	}
 }
 
-func (c *Client) getPHPSessionID() *string {
-	var sessionID string
-
+func (c *Client) getPHPSessionID() (sessionID string) {
 	loginURL := fmt.Sprintf(loginURLPattern, c.hostname)
 	values := url.Values{"pw": []string{c.password}}
 
@@ -134,10 +131,10 @@ func (c *Client) getPHPSessionID() *string {
 		}
 	}
 
-	return &sessionID
+	return
 }
 
-func (c *Client) getStatistics(sessionID string) *Stats {
+func (c *Client) getStatistics() *Stats {
 	var stats Stats
 
 	statsURL := fmt.Sprintf(statsURLPattern, c.hostname)
@@ -147,8 +144,9 @@ func (c *Client) getStatistics(sessionID string) *Stats {
 		log.Fatal("An error has occured when creating HTTP statistics request", err)
 	}
 
-	cookie := http.Cookie{Name: "PHPSESSID", Value: sessionID}
-	req.AddCookie(&cookie)
+	if c.isAuthenticated() {
+		c.authenticateRequest(req)
+	}
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -166,4 +164,13 @@ func (c *Client) getStatistics(sessionID string) *Stats {
 	}
 
 	return &stats
+}
+
+func (c *Client) isAuthenticated() bool {
+	return len(c.password) > 0
+}
+
+func (c *Client) authenticateRequest(req *http.Request) {
+	cookie := http.Cookie{Name: "PHPSESSID", Value: c.sessionID}
+	req.AddCookie(&cookie)
 }
