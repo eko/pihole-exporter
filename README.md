@@ -85,6 +85,15 @@ $ ./pihole_exporter -pihole_hostname 192.168.1.10 -pihole_password azerty
 ...
 ```
 
+Once the exporter is running, you also have to update your `prometheus.yml` configuration to let it scrape the exporter:
+
+```yaml
+scrape_configs:
+  - job_name: 'pihole'
+    static_configs:
+      - targets: ['localhost:9311']
+```
+
 ## Available CLI options
 ```bash
 # Interval of time the exporter will fetch data from PI-Hole
