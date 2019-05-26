@@ -34,6 +34,15 @@ You can download the latest version of the binary built for your architecture he
     [Linux](https://github.com/eko/pihole-exporter/releases/latest/download/pihole_exporter-linux-arm)
 ]
 
+### Using Docker
+
+The exporter is also available as a [Docker image](https://hub.docker.com/r/ekofr/pihole-exporter).
+You can run it using the following example and pass configuration environment variables:
+
+```
+$ docker run -e 'PIHOLE_HOSTNAME=192.168.1.2' ekofr/pihole-exporter:latest
+```
+
 ### From sources
 
 Optionally, you can download and build it from the sources. You have to retrieve the project sources by using one of the following way:
@@ -41,6 +50,12 @@ Optionally, you can download and build it from the sources. You have to retrieve
 $ go get -u github.com/eko/pihole-exporter
 # or
 $ git clone https://github.com/eko/pihole-exporter.git
+```
+
+Install the needed vendors:
+
+```
+$ GO111MODULE=on go mod vendor
 ```
 
 Then, build the binary (here, an example to run on Raspberry PI ARM architecture):
