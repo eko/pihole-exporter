@@ -40,7 +40,12 @@ The exporter is also available as a [Docker image](https://hub.docker.com/r/ekof
 You can run it using the following example and pass configuration environment variables:
 
 ```
-$ docker run -e 'PIHOLE_HOSTNAME=192.168.1.2' ekofr/pihole-exporter:latest
+$ docker run \
+  -e 'PIHOLE_HOSTNAME=192.168.1.2' \
+  -e 'PIHOLE_PASSWORD=mypassword' \
+  -e 'INTERVAL=30s' \
+  -e 'PORT=93111' \
+  ekofr/pihole-exporter:latest
 ```
 
 ### From sources
