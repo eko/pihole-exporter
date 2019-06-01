@@ -44,7 +44,7 @@ $ docker run \
   -e 'PIHOLE_HOSTNAME=192.168.1.2' \
   -e 'PIHOLE_PASSWORD=mypassword' \
   -e 'INTERVAL=30s' \
-  -e 'PORT=93111' \
+  -e 'PORT=9311' \
   ekofr/pihole-exporter:latest
 ```
 
