@@ -57,7 +57,7 @@
     "list": [
       {
         "builtIn": 1,
-        "datasource": "-- Grafana --",
+        "datasource": "${DS_PROMETHEUS}",
         "enable": true,
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
@@ -71,7 +71,7 @@
   "gnetId": 10176,
   "graphTooltip": 0,
   "id": null,
-  "iteration": 1559076223664,
+  "iteration": 1559385551318,
   "links": [],
   "panels": [
     {
@@ -378,7 +378,7 @@
       "strokeWidth": 1,
       "targets": [
         {
-          "expr": "pihole_top_queries{hostname=~'$node'}",
+          "expr": "pihole_top_queries{hostname=~\"$node\"}",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{ domain }}",
@@ -425,7 +425,7 @@
       "strokeWidth": 1,
       "targets": [
         {
-          "expr": "pihole_reply{hostname=~'$node'}",
+          "expr": "pihole_reply{hostname=~\"$node\"}",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{ type }}",
@@ -470,7 +470,7 @@
       "strokeWidth": 1,
       "targets": [
         {
-          "expr": "pihole_top_ads{hostname=~'$node'}",
+          "expr": "pihole_top_ads{hostname=~\"$node\"}",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{ domain }}",
@@ -618,7 +618,7 @@
         "showThresholdLabels": false,
         "showThresholdMarkers": true
       },
-      "pluginVersion": "6.2.1",
+      "pluginVersion": "6.2.0",
       "targets": [
         {
           "expr": "pihole_ads_percentage_today{hostname=~'$node'}",
@@ -1200,10 +1200,10 @@
         "pihole_unique_clients{hostname=\"127.0.0.1\",instance=\"localhost:9311\",job=\"pihole\"}": "rgb(255, 255, 255)",
         "pihole_unique_domains{hostname=\"127.0.0.1\",instance=\"localhost:9311\",job=\"pihole\"}": "super-light-yellow"
       },
-      "bars": true,
+      "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "fill": 1,
+      "fill": 10,
       "gridPos": {
         "h": 5,
         "w": 12,
@@ -1220,8 +1220,8 @@
         "total": false,
         "values": false
       },
-      "lines": false,
-      "linewidth": 1,
+      "lines": true,
+      "linewidth": 0,
       "links": [],
       "nullPointMode": "null",
       "options": {},
@@ -1350,5 +1350,5 @@
   "timezone": "",
   "title": "PI-Hole Exporter",
   "uid": "MIBVglomg",
-  "version": 7
+  "version": 159
 }
