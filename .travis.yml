@@ -21,7 +21,7 @@ install:
 
 script:
   - go test -v -race ./...
-  - if [ "${LATEST}" = "true" ]; then gox -os="linux darwin windows" -arch="386 amd64" -osarch="linux/arm" -output="pihole_exporter-{{.OS}}-{{.Arch}}"  -verbose ./...; fi
+  - if [ "${LATEST}" = "true" ]; then gox -ldflags "-s -w" -os="linux darwin windows" -arch="386 amd64" -osarch="linux/arm" -output="pihole_exporter-{{.OS}}-{{.Arch}}"  -verbose ./...; fi
 
 deploy:
   provider: releases
