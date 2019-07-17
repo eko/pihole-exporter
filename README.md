@@ -44,7 +44,7 @@ $ docker run \
   -e 'PIHOLE_HOSTNAME=192.168.1.2' \
   -e 'PIHOLE_PASSWORD=mypassword' \
   -e 'INTERVAL=30s' \
-  -e 'PORT=9311' \
+  -e 'PORT=9617' \
   ekofr/pihole-exporter:latest
 ```
 
@@ -80,7 +80,7 @@ $ ./pihole_exporter -pihole_hostname 192.168.1.10 -pihole_password azerty
 2019/05/09 20:19:52 ------------------------------------
 2019/05/09 20:19:52 PIHoleHostname : 192.168.1.10
 2019/05/09 20:19:52 PIHolePassword : azerty
-2019/05/09 20:19:52 Port : 9311
+2019/05/09 20:19:52 Port : 9617
 2019/05/09 20:19:52 Interval : 10s
 2019/05/09 20:19:52 ------------------------------------
 2019/05/09 20:19:52 New Prometheus metric registered: domains_blocked
@@ -111,7 +111,7 @@ Once the exporter is running, you also have to update your `prometheus.yml` conf
 scrape_configs:
   - job_name: 'pihole'
     static_configs:
-      - targets: ['localhost:9311']
+      - targets: ['localhost:9617']
 ```
 
 ## Available CLI options
@@ -126,7 +126,7 @@ scrape_configs:
   -pihole_password string (optional)
 
 # Port to be used for the exporter
-  -port string (optional) (default "9311")
+  -port string (optional) (default "9617")
 ```
 
 ## Available Prometheus metrics
