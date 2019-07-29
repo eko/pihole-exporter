@@ -27,7 +27,7 @@ func getDefaultConfig() *Config {
 		PIHoleHostname: "127.0.0.1",
 		PIHolePassword: "",
 
-		Port:     "9311",
+		Port:     "9617",
 		Interval: 10 * time.Second,
 	}
 }
