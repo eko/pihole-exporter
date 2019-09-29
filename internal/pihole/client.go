@@ -119,7 +119,7 @@ func (c *Client) getPHPSessionID() (sessionID string) {
 		log.Printf("An error has occured during login to PI-Hole: %v", err)
 	}
 
-	if resp.StatusCode != http.StatusFound {
+	if resp.StatusCode != http.StatusOK {
 		log.Printf("Unable to login to PI-Hole, got a HTTP status code response '%d' instead of '%d'", resp.StatusCode, http.StatusFound)
 		os.Exit(1)
 	}
