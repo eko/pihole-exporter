@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -117,11 +116,6 @@ func (c *Client) getPHPSessionID() (sessionID string) {
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		log.Printf("An error has occured during login to PI-Hole: %v", err)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		log.Printf("Unable to login to PI-Hole, got a HTTP status code response '%d' instead of '%d'", resp.StatusCode, http.StatusFound)
-		os.Exit(1)
 	}
 
 	for _, cookie := range resp.Cookies() {
