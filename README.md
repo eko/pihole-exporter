@@ -150,3 +150,10 @@ scrape_configs:
 | pihole_forward_destinations  | This represent the number of forward destinations requests made by PI-Hole by destination |
 | pihole_querytypes            | This represent the number of queries made by PI-Hole by type                              |
 | pihole_status                | This represent if PI-Hole is enabled                                                      |
+
+
+##Pihole-Exporter Helm Chart
+
+[Link](https://github.com/SiM22/pihole-exporter-helm-chart)
+
+This is a simple Helm Chart to deploy the exporter in a kubernetes cluster.
