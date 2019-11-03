@@ -152,7 +152,7 @@ scrape_configs:
 | pihole_status                | This represent if PI-Hole is enabled                                                      |
 
 
-##Pihole-Exporter Helm Chart
+## Pihole-Exporter Helm Chart
 
 [Link](https://github.com/SiM22/pihole-exporter-helm-chart)
 
