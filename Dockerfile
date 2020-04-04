@@ -1,7 +1,7 @@
 FROM golang:alpine as builder
 
-ARG OS
-ARG ARCH
+ARG OS=linux
+ARG ARCH=amd64
 
 WORKDIR /go/src/github.com/eko/pihole-exporter
 COPY . .
