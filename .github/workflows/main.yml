@@ -39,5 +39,5 @@ jobs:
         password: ${{ secrets.DOCKER_PASSWORD }}
         repository: ekofr/pihole-exporter
         tag_with_sha: true
-        tags: armv64
+        tags: arm64
         build_args: OS=linux,ARCH=arm64
