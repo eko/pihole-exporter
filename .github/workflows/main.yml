@@ -32,7 +32,7 @@ jobs:
         tag_with_sha: true
         tags: amd64
         build_args: OS=linux,ARCH=amd64
-    - name: Build and Push Docker Image (Linux ARM64)
+    - name: Build and Push Docker Image (Linux - ARM64)
       uses: docker/build-push-action@v1
       with:
         username: ${{ secrets.DOCKER_USERNAME }}
