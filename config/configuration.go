@@ -61,7 +61,10 @@ func (c Config) show() {
 		valueField := val.Field(i)
 		typeField := val.Type().Field(i)
 
-		log.Println(fmt.Sprintf("%s : %v", typeField.Name, valueField.Interface()))
+		// Do not print password
+		if typeField.Name != "PIHolePassword" {
+			log.Println(fmt.Sprintf("%s : %v", typeField.Name, valueField.Interface()))
+		}
 	}
 	log.Println("------------------------------------")
 }
