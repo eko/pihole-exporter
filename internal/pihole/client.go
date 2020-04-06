@@ -26,13 +26,15 @@ type Client struct {
 	hostname   string
 	password   string
 	sessionID  string
+	apiToken   string
 }
 
 // NewClient method initializes a new PI-Hole client.
-func NewClient(hostname, password string, interval time.Duration) *Client {
+func NewClient(hostname, password, apiToken string, interval time.Duration) *Client {
 	return &Client{
 		hostname: hostname,
 		password: password,
+		apiToken: apiToken,
 		interval: interval,
 		httpClient: http.Client{
 			CheckRedirect: func(req *http.Request, via []*http.Request) error {
@@ -42,15 +44,12 @@ func NewClient(hostname, password string, interval time.Duration) *Client {
 	}
 }
 
-// Scrape method logins and retrieves statistics from PI-Hole JSON API
+// Scrape method authenticates and retrieves statistics from PI-Hole JSON API
 // and then pass them as Prometheus metrics.
 func (c *Client) Scrape() {
 	for range time.Tick(c.interval) {
-		if c.isAuthenticated() {
-			c.sessionID = c.getPHPSessionID()
-		}
-
 		stats := c.getStatistics()
+
 		c.setMetrics(stats)
 
 		log.Printf("New tick of statistics: %s", stats.ToString())
@@ -133,12 +132,16 @@ func (c *Client) getStatistics() *Stats {
 
 	statsURL := fmt.Sprintf(statsURLPattern, c.hostname)
 
+	if c.isUsingApiToken() {
+		statsURL = fmt.Sprintf("%s&auth=%s", statsURL, c.apiToken)
+	}
+
 	req, err := http.NewRequest("GET", statsURL, nil)
 	if err != nil {
 		log.Fatal("An error has occured when creating HTTP statistics request", err)
 	}
 
-	if c.isAuthenticated() {
+	if c.isUsingPassword() {
 		c.authenticateRequest(req)
 	}
 
@@ -160,11 +163,15 @@ func (c *Client) getStatistics() *Stats {
 	return &stats
 }
 
-func (c *Client) isAuthenticated() bool {
+func (c *Client) isUsingPassword() bool {
 	return len(c.password) > 0
 }
 
+func (c *Client) isUsingApiToken() bool {
+	return len(c.apiToken) > 0
+}
+
 func (c *Client) authenticateRequest(req *http.Request) {
-	cookie := http.Cookie{Name: "PHPSESSID", Value: c.sessionID}
+	cookie := http.Cookie{Name: "PHPSESSID", Value: c.getPHPSessionID()}
 	req.AddCookie(&cookie)
 }

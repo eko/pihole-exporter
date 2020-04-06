@@ -48,6 +48,18 @@ $ docker run \
   ekofr/pihole-exporter:latest
 ```
 
+Or use PiHole's `WEBPASSWORD` as an API token instead of the password
+
+```bash
+$ API_TOKEN=$(awk -F= -v key="WEBPASSWORD" '$1==key {print $2}' /etc/pihole/setupVars.conf)
+$ docker run \
+  -e 'PIHOLE_HOSTNAME=192.168.1.2' \
+  -e "PIHOLE_APITOKEN=$API_TOKEN" \
+  -e 'INTERVAL=30s' \
+  -e 'PORT=9617' \
+  ekofr/pihole-exporter:latest
+```
+
 ### From sources
 
 Optionally, you can download and build it from the sources. You have to retrieve the project sources by using one of the following way:
@@ -72,9 +84,20 @@ $ GOOS=linux GOARCH=arm GOARM=7 go build -o pihole_exporter .
 
 In order to run the exporter, type the following command (arguments are optional):
 
+Using a password
+
 ```bash
 $ ./pihole_exporter -pihole_hostname 192.168.1.10 -pihole_password azerty
+```
 
+Or use PiHole's `WEBPASSWORD` as an API token instead of the password
+
+```bash
+$ API_TOKEN=$(awk -F= -v key="WEBPASSWORD" '$1==key {print $2}' /etc/pihole/setupVars.conf)
+$ ./pihole_exporter -pihole_hostname 192.168.1.10 -pihole_apitoken $API_TOKEN
+```
+
+```bash
 2019/05/09 20:19:52 ------------------------------------
 2019/05/09 20:19:52 -  PI-Hole exporter configuration  -
 2019/05/09 20:19:52 ------------------------------------
@@ -124,6 +147,10 @@ scrape_configs:
 
 # Password defined on the PI-Hole interface
   -pihole_password string (optional)
+
+
+# WEBPASSWORD / api token defined on the PI-Hole interface at `/etc/pihole/setupVars.conf`
+  -pihole_apitoken string (optional)
 
 # Port to be used for the exporter
   -port string (optional) (default "9617")

@@ -15,20 +15,20 @@ import (
 
 // Config is the exporter CLI configuration.
 type Config struct {
-	PIHoleHostname string `config:"pihole_hostname"`
-	PIHolePassword string `config:"pihole_password"`
-
-	Port     string        `config:"port"`
-	Interval time.Duration `config:"interval"`
+	PIHoleHostname string        `config:"pihole_hostname"`
+	PIHolePassword string        `config:"pihole_password"`
+	PIHoleApiToken string        `config:"pihole_apitoken"`
+	Port           string        `config:"port"`
+	Interval       time.Duration `config:"interval"`
 }
 
 func getDefaultConfig() *Config {
 	return &Config{
 		PIHoleHostname: "127.0.0.1",
 		PIHolePassword: "",
-
-		Port:     "9617",
-		Interval: 10 * time.Second,
+		PIHoleApiToken: "",
+		Port:           "9617",
+		Interval:       10 * time.Second,
 	}
 }
 
@@ -61,10 +61,18 @@ func (c Config) show() {
 		valueField := val.Field(i)
 		typeField := val.Type().Field(i)
 
-		// Do not print password
-		if typeField.Name != "PIHolePassword" {
+		// Do not print password or api token but do print the authentication method
+		if typeField.Name != "PIHolePassword" && typeField.Name != "PIHoleApiToken" {
 			log.Println(fmt.Sprintf("%s : %v", typeField.Name, valueField.Interface()))
+		} else {
+			showAuthenticationMethod(typeField.Name, valueField.String())
 		}
 	}
 	log.Println("------------------------------------")
+}
+
+func showAuthenticationMethod(name, value string) {
+	if len(value) > 0 {
+		log.Println(fmt.Sprintf("PiHole Authentication Method : %s", name))
+	}
 }
