@@ -54,7 +54,7 @@ Or use PiHole's `WEBPASSWORD` as an API token instead of the password
 $ API_TOKEN=$(awk -F= -v key="WEBPASSWORD" '$1==key {print $2}' /etc/pihole/setupVars.conf)
 $ docker run \
   -e 'PIHOLE_HOSTNAME=192.168.1.2' \
-  -e "PIHOLE_APITOKEN=$API_TOKEN" \
+  -e "PIHOLE_API_TOKEN=$API_TOKEN" \
   -e 'INTERVAL=30s' \
   -e 'PORT=9617' \
   ekofr/pihole-exporter:latest
@@ -94,7 +94,7 @@ Or use PiHole's `WEBPASSWORD` as an API token instead of the password
 
 ```bash
 $ API_TOKEN=$(awk -F= -v key="WEBPASSWORD" '$1==key {print $2}' /etc/pihole/setupVars.conf)
-$ ./pihole_exporter -pihole_hostname 192.168.1.10 -pihole_apitoken $API_TOKEN
+$ ./pihole_exporter -pihole_hostname 192.168.1.10 -pihole_api_token $API_TOKEN
 ```
 
 ```bash
@@ -150,7 +150,7 @@ scrape_configs:
 
 
 # WEBPASSWORD / api token defined on the PI-Hole interface at `/etc/pihole/setupVars.conf`
-  -pihole_apitoken string (optional)
+  -pihole_api_token string (optional)
 
 # Port to be used for the exporter
   -port string (optional) (default "9617")

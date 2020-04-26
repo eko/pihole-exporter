@@ -17,7 +17,7 @@ import (
 type Config struct {
 	PIHoleHostname string        `config:"pihole_hostname"`
 	PIHolePassword string        `config:"pihole_password"`
-	PIHoleApiToken string        `config:"pihole_apitoken"`
+	PIHoleApiToken string        `config:"pihole_api_token"`
 	Port           string        `config:"port"`
 	Interval       time.Duration `config:"interval"`
 }
@@ -73,6 +73,6 @@ func (c Config) show() {
 
 func showAuthenticationMethod(name, value string) {
 	if len(value) > 0 {
-		log.Println(fmt.Sprintf("PiHole Authentication Method : %s", name))
+		log.Println(fmt.Sprintf("Pi-Hole Authentication Method : %s", name))
 	}
 }
