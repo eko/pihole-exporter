@@ -1,0 +1,47 @@
+name: Build and Publish (master)
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build-amd64:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2 
+    - name: Build and Push Docker Image (Linux - AMD64)
+      uses: docker/build-push-action@v1
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+        repository: ekofr/pihole-exporter
+        tags: amd64
+        build_args: OS=linux,ARCH=amd64,IMAGE=scratch
+
+  build-arm32:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2 
+    - name: Build and Push Docker Image (Linux - ARM32)
+      uses: docker/build-push-action@v1
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+        repository: ekofr/pihole-exporter
+        tags: arm32
+        build_args: OS=linux,ARCH=arm,IMAGE=arm32v7/alpine:3.11
+        
+  build-arm64:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build and Push Docker Image (Linux - ARM64)
+      uses: docker/build-push-action@v1
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+        repository: ekofr/pihole-exporter
+        tags: arm64
+        build_args: OS=linux,ARCH=arm64,IMAGE=arm64v8/alpine:3.11

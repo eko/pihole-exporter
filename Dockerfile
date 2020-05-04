@@ -1,8 +1,8 @@
-FROM golang:alpine as builder
-
+ARG IMAGE=scratch
 ARG OS=linux
 ARG ARCH=amd64
-ARG IMAGE=scratch
+
+FROM golang:alpine as builder
 
 WORKDIR /go/src/github.com/eko/pihole-exporter
 COPY . .
