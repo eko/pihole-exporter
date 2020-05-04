@@ -2,6 +2,7 @@ FROM golang:alpine as builder
 
 ARG OS=linux
 ARG ARCH=amd64
+ARG IMAGE=scratch
 
 WORKDIR /go/src/github.com/eko/pihole-exporter
 COPY . .
@@ -13,7 +14,7 @@ RUN GO111MODULE=on go mod vendor
 RUN CGO_ENABLED=0 GOOS=$OS GOARCH=$ARCH go build -ldflags '-s -w' -o binary ./
 RUN upx -f --brute binary
 
-FROM scratch
+FROM $IMAGE
 
 LABEL name="pihole-exporter"
 
