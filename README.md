@@ -1,6 +1,6 @@
 # PI-Hole Prometheus Exporter
 
-[![TravisBuildStatus](https://api.travis-ci.org/eko/pihole-exporter.svg?branch=master)](https://travis-ci.org/eko/pihole-exporter)
+![Build/Push (master)](https://github.com/eko/pihole-exporter/workflows/Build/Push%20(master)/badge.svg)
 [![GoDoc](https://godoc.org/github.com/eko/pihole-exporter?status.png)](https://godoc.org/github.com/eko/pihole-exporter)
 [![GoReportCard](https://goreportcard.com/badge/github.com/eko/pihole-exporter)](https://goreportcard.com/report/github.com/eko/pihole-exporter)
 
