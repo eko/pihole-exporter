@@ -2,9 +2,11 @@ name: Build/Push (master)
 
 on:
   push:
-    branches: [ ci ]
+    branches:
+      - '*'
   pull_request:
-    branches: [ ci ]
+    branches:
+      - '*'
 
 jobs:
   test:
@@ -17,8 +19,12 @@ jobs:
       - uses: actions/setup-go@v1
         with:
           go-version: ${{ matrix.go_version }}
-      - run: go get -t -v ./...
-      - run: go test -v -race ./...
+
+      - name: Install go dependencies
+        run: go get -t -v ./...
+
+      - name: Run go tests
+        run: go test -v -cover -race ./...
 
   build:
     runs-on: ubuntu-latest
@@ -39,7 +45,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Build/Push docker image (${{ matrix.os }}/${{ matrix.arch }})
+      - name: Build and push docker image (${{ matrix.os }}/${{ matrix.arch }})
         uses: docker/build-push-action@v1
         with:
           username: ${{ secrets.DOCKER_USERNAME }}

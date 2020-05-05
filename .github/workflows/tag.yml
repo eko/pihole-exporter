@@ -2,13 +2,8 @@ name: Build/Push (tag)
 
 on:
   push:
-    branches: [ ci ]
-  pull_request:
-    branches: [ ci ]
-#on:
-#  push:
-#    tags:
-#      - '*'
+    tags:
+      - '*'
 
 jobs:
   test:
@@ -71,8 +66,10 @@ jobs:
           release_name: ${{ github.ref }}
           draft: false
           prerelease: false
+    outputs:
+      upload_url: ${{ steps.create.outputs.upload_url }}
 
-  push:
+  upload:
     runs-on: ubuntu-latest
     needs: release
     strategy:
@@ -90,17 +87,24 @@ jobs:
             arch: amd64
           - os: windows
             arch: 386
+            extension: '.exe'
           - os: windows
             arch: amd64
+            extension: '.exe'
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
         with:
           go-version: 1.14
-      - run: go get -t -v ./...
 
-      - run: go install github.com/mitchellh/gox
-      - run: gox -ldflags "-s -w" -os="${{ matrix.os }}" -arch="${{ matrix.arch }}" -output="pihole_exporter-{{.OS}}-{{.Arch}}"  -verbose ./...
+      - name: Download go dependencies
+        run: go get -t -v ./...
+
+      - name: Install mitchellh/gox to create platform specific releases
+        run: go install github.com/mitchellh/gox
+
+      - name: Create release
+        run: gox -ldflags "-s -w" -os="${{ matrix.os }}" -arch="${{ matrix.arch }}" -output="pihole_exporter-{{.OS}}-{{.Arch}}"  -verbose ./...
 
       - name: Upload release assets
         id: upload-release-asset
@@ -108,7 +112,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.create.outputs.upload_url }}
-          asset_path: ./pihole_exporter-${{ matrix.os }}-${{ matrix.arch }}
-          asset_name: pihole_exporter-${{ matrix.os }}-${{ matrix.arch }}
+          upload_url: ${{ needs.release.outputs.upload_url }}${{ matrix.extension }}
+          asset_path: ./pihole_exporter-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.extension }}
+          asset_name: pihole_exporter-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.extension }}
           asset_content_type: application/octet-stream
