@@ -61,6 +61,21 @@ $ docker run \
   ekofr/pihole-exporter:latest
 ```
 
+If you are running pi-hole behind https, you must both set the `PIHOLE_PROTOCOL` environment variable
+as well as include your ssl certificates to the docker image as it does not have any baked in:
+
+```
+$ docker run \
+  -e 'PIHOLE_PROTOCOL=https' \
+  -e 'PIHOLE_HOSTNAME=192.168.1.2' \
+  -e 'PIHOLE_PASSWORD=mypassword' \
+  -e 'INTERVAL=30s' \
+  -e 'PORT=9617' \
+  -v '/etc/ssl/certs:/etc/ssl/certs:ro' \
+  -p 9617:9617 \
+  ekofr/pihole-exporter:latest
+```
+
 ### From sources
 
 Optionally, you can download and build it from the sources. You have to retrieve the project sources by using one of the following way:

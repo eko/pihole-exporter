@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -15,14 +16,15 @@ import (
 )
 
 var (
-	loginURLPattern = "http://%s/admin/index.php?login"
-	statsURLPattern = "http://%s/admin/api.php?summaryRaw&overTimeData&topItems&recentItems&getQueryTypes&getForwardDestinations&getQuerySources&jsonForceObject"
+	loginURLPattern = "%s://%s/admin/index.php?login"
+	statsURLPattern = "%s://%s/admin/api.php?summaryRaw&overTimeData&topItems&recentItems&getQueryTypes&getForwardDestinations&getQuerySources&jsonForceObject"
 )
 
 // Client struct is a PI-Hole client to request an instance of a PI-Hole ad blocker.
 type Client struct {
 	httpClient http.Client
 	interval   time.Duration
+	protocol   string
 	hostname   string
 	password   string
 	sessionID  string
@@ -30,8 +32,14 @@ type Client struct {
 }
 
 // NewClient method initializes a new PI-Hole client.
-func NewClient(hostname, password, apiToken string, interval time.Duration) *Client {
+func NewClient(protocol, hostname, password, apiToken string, interval time.Duration) *Client {
+	if protocol != "http" && protocol != "https" {
+		log.Printf("protocol %s is invalid. Must be http or https.", protocol)
+		os.Exit(1)
+	}
+
 	return &Client{
+		protocol: protocol,
 		hostname: hostname,
 		password: password,
 		apiToken: apiToken,
@@ -101,7 +109,7 @@ func (c *Client) setMetrics(stats *Stats) {
 }
 
 func (c *Client) getPHPSessionID() (sessionID string) {
-	loginURL := fmt.Sprintf(loginURLPattern, c.hostname)
+	loginURL := fmt.Sprintf(loginURLPattern, c.protocol, c.hostname)
 	values := url.Values{"pw": []string{c.password}}
 
 	req, err := http.NewRequest("POST", loginURL, strings.NewReader(values.Encode()))
@@ -130,7 +138,7 @@ func (c *Client) getPHPSessionID() (sessionID string) {
 func (c *Client) getStatistics() *Stats {
 	var stats Stats
 
-	statsURL := fmt.Sprintf(statsURLPattern, c.hostname)
+	statsURL := fmt.Sprintf(statsURLPattern, c.protocol, c.hostname)
 
 	if c.isUsingApiToken() {
 		statsURL = fmt.Sprintf("%s&auth=%s", statsURL, c.apiToken)
