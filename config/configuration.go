@@ -17,6 +17,7 @@ import (
 type Config struct {
 	PIHoleProtocol string        `config:"pihole_protocol"`
 	PIHoleHostname string        `config:"pihole_hostname"`
+	PIHolePort     uint16        `config:"pihole_port"`
 	PIHolePassword string        `config:"pihole_password"`
 	PIHoleApiToken string        `config:"pihole_api_token"`
 	Port           string        `config:"port"`
@@ -27,6 +28,7 @@ func getDefaultConfig() *Config {
 	return &Config{
 		PIHoleProtocol: "http",
 		PIHoleHostname: "127.0.0.1",
+		PIHolePort:     80,
 		PIHolePassword: "",
 		PIHoleApiToken: "",
 		Port:           "9617",

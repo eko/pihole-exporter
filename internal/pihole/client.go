@@ -16,8 +16,8 @@ import (
 )
 
 var (
-	loginURLPattern = "%s://%s/admin/index.php?login"
-	statsURLPattern = "%s://%s/admin/api.php?summaryRaw&overTimeData&topItems&recentItems&getQueryTypes&getForwardDestinations&getQuerySources&jsonForceObject"
+	loginURLPattern = "%s://%s:%d/admin/index.php?login"
+	statsURLPattern = "%s://%s:%d/admin/api.php?summaryRaw&overTimeData&topItems&recentItems&getQueryTypes&getForwardDestinations&getQuerySources&jsonForceObject"
 )
 
 // Client struct is a PI-Hole client to request an instance of a PI-Hole ad blocker.
@@ -26,13 +26,14 @@ type Client struct {
 	interval   time.Duration
 	protocol   string
 	hostname   string
+	port       uint16
 	password   string
 	sessionID  string
 	apiToken   string
 }
 
 // NewClient method initializes a new PI-Hole client.
-func NewClient(protocol, hostname, password, apiToken string, interval time.Duration) *Client {
+func NewClient(protocol, hostname string, port uint16, password, apiToken string, interval time.Duration) *Client {
 	if protocol != "http" && protocol != "https" {
 		log.Printf("protocol %s is invalid. Must be http or https.", protocol)
 		os.Exit(1)
@@ -41,6 +42,7 @@ func NewClient(protocol, hostname, password, apiToken string, interval time.Dura
 	return &Client{
 		protocol: protocol,
 		hostname: hostname,
+		port:     port,
 		password: password,
 		apiToken: apiToken,
 		interval: interval,
@@ -109,7 +111,7 @@ func (c *Client) setMetrics(stats *Stats) {
 }
 
 func (c *Client) getPHPSessionID() (sessionID string) {
-	loginURL := fmt.Sprintf(loginURLPattern, c.protocol, c.hostname)
+	loginURL := fmt.Sprintf(loginURLPattern, c.protocol, c.hostname, c.port)
 	values := url.Values{"pw": []string{c.password}}
 
 	req, err := http.NewRequest("POST", loginURL, strings.NewReader(values.Encode()))
@@ -138,7 +140,7 @@ func (c *Client) getPHPSessionID() (sessionID string) {
 func (c *Client) getStatistics() *Stats {
 	var stats Stats
 
-	statsURL := fmt.Sprintf(statsURLPattern, c.protocol, c.hostname)
+	statsURL := fmt.Sprintf(statsURLPattern, c.protocol, c.hostname, c.port)
 
 	if c.isUsingApiToken() {
 		statsURL = fmt.Sprintf("%s&auth=%s", statsURL, c.apiToken)
