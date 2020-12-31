@@ -21,7 +21,6 @@ Grafana dashboard is [available here](https://grafana.com/dashboards/10176) on t
 You can download the latest version of the binary built for your architecture here:
 
 * Architecture **i386** [
-    [Darwin](https://github.com/eko/pihole-exporter/releases/latest/download/pihole_exporter-darwin-386) /
     [Linux](https://github.com/eko/pihole-exporter/releases/latest/download/pihole_exporter-linux-386) /
     [Windows](https://github.com/eko/pihole-exporter/releases/latest/download/pihole_exporter-windows-386.exe)
 ]
@@ -31,6 +30,7 @@ You can download the latest version of the binary built for your architecture he
     [Windows](https://github.com/eko/pihole-exporter/releases/latest/download/pihole_exporter-windows-amd64.exe)
 ]
 * Architecture **arm** [
+    [Darwin](https://github.com/eko/pihole-exporter/releases/latest/download/pihole_exporter-darwin-arm64) /
     [Linux](https://github.com/eko/pihole-exporter/releases/latest/download/pihole_exporter-linux-arm)
 ]
 
