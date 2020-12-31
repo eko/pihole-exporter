@@ -82,9 +82,9 @@ jobs:
           - os: linux
             arch: arm
           - os: darwin
-            arch: 386
-          - os: darwin
             arch: amd64
+          - os: darwin
+            arch: arm
           - os: windows
             arch: 386
             extension: '.exe'
