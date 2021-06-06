@@ -37,10 +37,10 @@ jobs:
             image: scratch
           - os: linux
             arch: arm
-            image: arm32v7/alpine:3.11
+            image: arm32v7/alpine:3.13
           - os: linux
             arch: arm64
-            image: arm64v8/alpine:3.11
+            image: arm64v8/alpine:3.13
 
     steps:
       - uses: actions/checkout@v2
