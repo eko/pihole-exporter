@@ -2,23 +2,12 @@ package main
 
 import (
 	"fmt"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
 
 	"github.com/eko/pihole-exporter/config"
 	"github.com/eko/pihole-exporter/internal/metrics"
 	"github.com/eko/pihole-exporter/internal/pihole"
 	"github.com/eko/pihole-exporter/internal/server"
-)
-
-const (
-	name = "pihole-exporter"
-)
-
-var (
-	s *server.Server
+	"github.com/xonvanetta/shutdown/pkg/shutdown"
 )
 
 func main() {
@@ -26,28 +15,24 @@ func main() {
 
 	metrics.Init()
 
-	initPiHoleClient(conf.PIHoleProtocol, conf.PIHoleHostname, conf.PIHolePort, conf.PIHolePassword, conf.PIHoleApiToken, conf.Interval)
-	initHttpServer(conf.Port)
+	serverDead := make(chan struct{})
+	s := server.NewServer(conf.Port, pihole.NewClient(conf))
+	go func() {
+		s.ListenAndServe()
+		close(serverDead)
+	}()
 
-	handleExitSignal()
-}
+	ctx := shutdown.Context()
 
-func initPiHoleClient(protocol, hostname string, port uint16, password, apiToken string, interval time.Duration) {
-	client := pihole.NewClient(protocol, hostname, port, password, apiToken, interval)
-	go client.Scrape()
-}
+	go func() {
+		<-ctx.Done()
+		s.Stop()
+	}()
 
-func initHttpServer(port string) {
-	s = server.NewServer(port)
-	go s.ListenAndServe()
-}
+	select {
+	case <-ctx.Done():
+	case <-serverDead:
+	}
 
-func handleExitSignal() {
-	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
-
-	<-stop
-
-	s.Stop()
-	fmt.Println(fmt.Sprintf("\n%s HTTP server stopped", name))
+	fmt.Println("pihole-exporter HTTP server stopped")
 }
