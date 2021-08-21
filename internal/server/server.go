@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/eko/pihole-exporter/internal/pihole"
 	"golang.org/x/net/context"
 )
 
@@ -16,7 +16,7 @@ type Server struct {
 
 // NewServer method initializes a new HTTP server instance and associates
 // the different routes that will be used by Prometheus (metrics) or for monitoring (readiness, liveness).
-func NewServer(port string) *Server {
+func NewServer(port string, client *pihole.Client) *Server {
 	mux := http.NewServeMux()
 	httpServer := &http.Server{Addr: ":" + port, Handler: mux}
 
@@ -24,7 +24,7 @@ func NewServer(port string) *Server {
 		httpServer: httpServer,
 	}
 
-	mux.Handle("/metrics", promhttp.Handler())
+	mux.Handle("/metrics", client.Metrics())
 	mux.Handle("/readiness", s.readinessHandler())
 	mux.Handle("/liveness", s.livenessHandler())
 
@@ -50,19 +50,19 @@ func (s *Server) Stop() {
 }
 
 func (s *Server) readinessHandler() http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+	return func(w http.ResponseWriter, req *http.Request) {
 		if s.isReady() {
 			w.WriteHeader(http.StatusOK)
 		} else {
 			w.WriteHeader(http.StatusNotFound)
 		}
-	})
+	}
 }
 
 func (s *Server) livenessHandler() http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+	return func(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(http.StatusOK)
-	})
+	}
 }
 
 func (s *Server) isReady() bool {

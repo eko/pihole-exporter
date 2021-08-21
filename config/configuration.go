@@ -56,6 +56,32 @@ func Load() *Config {
 	return cfg
 }
 
+//Validate check if the config is valid
+func (c Config) Validate() error {
+	if c.PIHoleProtocol != "http" && c.PIHoleProtocol != "https" {
+		return fmt.Errorf("protocol %s is invalid. Must be http or https", c.PIHoleProtocol)
+	}
+	return nil
+}
+
+func (c Config) hostnameURL() string {
+	s := fmt.Sprintf("%s://%s", c.PIHoleProtocol, c.PIHoleHostname)
+	if c.PIHolePort != 0 {
+		s += fmt.Sprintf(":%d", c.PIHolePort)
+	}
+	return s
+}
+
+//PIHoleStatsURL returns the stats url
+func (c Config) PIHoleStatsURL() string {
+	return c.hostnameURL() + "/admin/api.php?summaryRaw&overTimeData&topItems&recentItems&getQueryTypes&getForwardDestinations&getQuerySources&jsonForceObject"
+}
+
+//PIHoleLoginURL returns the login url
+func (c Config) PIHoleLoginURL() string {
+	return c.hostnameURL() + "/admin/index.php?login"
+}
+
 func (c Config) show() {
 	val := reflect.ValueOf(&c).Elem()
 	log.Println("------------------------------------")
