@@ -205,8 +205,8 @@ github.com/tmc/grpc-websocket-proxy v0.0.0-20190109142713-0ad062ec5ee5/go.mod h1
 github.com/tv42/httpunix v0.0.0-20150427012821-b75d8614f926/go.mod h1:9ESjWnEqriFuLhtthL60Sar/7RFoluCcXsuvEwTV5KM=
 github.com/ugorji/go v1.1.4/go.mod h1:uQMGLiO92mf5W77hV/PUCpI3pbzQx3CRekS0kk+RGrc=
 github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2/go.mod h1:UETIi67q53MR2AWcXfiuqkDkRtnGDLqkBTpCHuJHxtU=
-github.com/xonvanetta/shutdown v0.0.2 h1:FTbzm/55K8GPgaFdllI71V/cH7IRsyNJD6Z3JVR66Zs=
-github.com/xonvanetta/shutdown v0.0.2/go.mod h1:bYnVnX8ITK2E9GpuH/YVfctve/d5oOIvWsyhFj/N450=
+github.com/xonvanetta/shutdown v0.0.3 h1:Gf9Rh0kEJgUjV8ZmG08t5MMF+jrBaGzO+EM0GlmitHU=
+github.com/xonvanetta/shutdown v0.0.3/go.mod h1:bYnVnX8ITK2E9GpuH/YVfctve/d5oOIvWsyhFj/N450=
 go.etcd.io/bbolt v1.3.2/go.mod h1:IbVyRI1SCnLcuJnV2u8VeU0CEYM7e686BmAb1XKL+uU=
 golang.org/x/crypto v0.0.0-20180904163835-0709b304e793/go.mod h1:6SG95UA2DQfeDnfUPMdvaQW0Q7yPrPDi9nlGo2tz2b4=
 golang.org/x/crypto v0.0.0-20181029021203-45a5f77698d3/go.mod h1:6SG95UA2DQfeDnfUPMdvaQW0Q7yPrPDi9nlGo2tz2b4=
