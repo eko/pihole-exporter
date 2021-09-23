@@ -11,7 +11,7 @@ services:
     expose:
       - 9617
     environment:
-      PIHOLE_HOSTNAME: CHANG_EME 
+      PIHOLE_HOSTNAME: CHANGE_ME 
       PIHOLE_PORT: CHANGE_ME
       PIHOLE_PASSWORD: CHANGE_ME
       INTERVAL: 30s
