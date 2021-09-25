@@ -1,0 +1,19 @@
+version: "3.6"
+services:
+  pihole_exporter:
+    build:
+      context: ./
+      args:
+        ARCH: CHANGE_ME
+      dockerfile: Dockerfile
+    image: ekofr/pihole-exporter:arm64
+    container_name: pihole_exporter
+    expose:
+      - 9617
+    environment:
+      PIHOLE_HOSTNAME: CHANGE_ME 
+      PIHOLE_PORT: CHANGE_ME
+      PIHOLE_PASSWORD: CHANGE_ME
+      INTERVAL: 30s
+      PORT: 9617
+    restart: always
