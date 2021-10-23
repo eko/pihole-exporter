@@ -107,9 +107,10 @@ jobs:
       - name: Download go dependencies
         run: go get -t -v ./...
 
+      # Release File
       - name: Create release
         run: GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -ldflags "-s -w" -o pihole_exporter-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.extension }} ./
-
+   
       - name: Upload release assets
         id: upload-release-asset
         uses: actions/upload-release-asset@v1
@@ -119,4 +120,19 @@ jobs:
           upload_url: ${{ needs.release.outputs.upload_url }}${{ matrix.extension }}
           asset_path: ./pihole_exporter-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.extension }}
           asset_name: pihole_exporter-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.extension }}
+          asset_content_type: application/octet-stream
+      
+      # SHA256 Sum File
+      - name: Create SHA256 sum
+        run: sha256sum pihole_exporter-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.extension }} > pihole_exporter-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.extension }}.sha256.txt
+        
+      - name: Upload release assets
+        id: upload-release-sum-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.release.outputs.upload_url }}${{ matrix.extension }}.sha256.txt
+          asset_path: ./pihole_exporter-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.extension }}.sha256.txt
+          asset_name: pihole_exporter-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.extension }}.sha256.txt
           asset_content_type: application/octet-stream
