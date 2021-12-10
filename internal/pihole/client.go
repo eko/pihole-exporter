@@ -32,7 +32,9 @@ func NewClient(config *config.Config) *Client {
 		os.Exit(1)
 	}
 
-	return &Client{
+	fmt.Printf("Creating client with config %s\n", config)
+
+	client := &Client{
 		config: config,
 		httpClient: http.Client{
 			CheckRedirect: func(req *http.Request, via []*http.Request) error {
@@ -40,6 +42,14 @@ func NewClient(config *config.Config) *Client {
 			},
 		},
 	}
+
+	fmt.Printf("Client created with config %s\n", client)
+
+	return client
+}
+
+func (c *Client) String() string {
+	return c.config.PIHoleHostname
 }
 
 // Metrics scrapes pihole and sets them
@@ -56,6 +66,23 @@ func (c *Client) Metrics() http.HandlerFunc {
 		log.Printf("New tick of statistics: %s", stats.ToString())
 		promhttp.Handler().ServeHTTP(writer, request)
 	}
+}
+
+func (c *Client) CollectMetrics(writer http.ResponseWriter, request *http.Request) {
+	stats, err := c.getStatistics()
+	if err != nil {
+		writer.WriteHeader(http.StatusBadRequest)
+		_, _ = writer.Write([]byte(err.Error()))
+		return
+	}
+	c.setMetrics(stats)
+
+	log.Printf("New tick of statistics: %s", stats.ToString())
+	promhttp.Handler().ServeHTTP(writer, request)
+}
+
+func (c *Client) GetHostname() string {
+	return c.config.PIHoleHostname
 }
 
 func (c *Client) setMetrics(stats *Stats) {

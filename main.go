@@ -11,12 +11,19 @@ import (
 )
 
 func main() {
-	conf := config.Load()
+	envConf, clientConfigs := config.Load()
 
 	metrics.Init()
 
 	serverDead := make(chan struct{})
-	s := server.NewServer(conf.Port, pihole.NewClient(conf))
+	clients := make([]*pihole.Client, 0, len(clientConfigs))
+	for i, _ := range clientConfigs {
+		client := pihole.NewClient(&clientConfigs[i])
+		clients = append(clients, client)
+		fmt.Printf("Append client %s\n", clients)
+	}
+
+	s := server.NewServer(envConf.Port, clients)
 	go func() {
 		s.ListenAndServe()
 		close(serverDead)
