@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/heetch/confita"
@@ -62,6 +63,20 @@ func Load() (*EnvConfig, []Config) {
 	cfg.show()
 
 	return cfg, cfg.Split()
+}
+
+func (c *Config) String() string {
+	ref := reflect.ValueOf(c)
+	fields := ref.Elem()
+
+	buffer := make([]string, fields.NumField(), fields.NumField())
+	for i := 0; i < fields.NumField(); i++ {
+		valueField := fields.Field(i)
+		typeField := fields.Type().Field(i)
+		buffer[i] = fmt.Sprintf("%s=%v", typeField.Name, valueField.Interface())
+	}
+
+	return fmt.Sprintf("<Config@%X %s>", &c, strings.Join(buffer, ", "))
 }
 
 //Validate check if the config is valid

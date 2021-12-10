@@ -31,6 +31,6 @@ type Stats struct {
 }
 
 // ToString method returns a string of the current statistics struct.
-func (s *Stats) ToString() string {
+func (s *Stats) String() string {
 	return fmt.Sprintf("%d ads blocked / %d total DNS queries", s.AdsBlockedToday, s.DNSQueriesAllTypes)
 }

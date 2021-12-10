@@ -5,9 +5,11 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/eko/pihole-exporter/internal/pihole"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"golang.org/x/net/context"
 )
 
@@ -33,10 +35,22 @@ func NewServer(port uint16, clients []*pihole.Client) *Server {
 
 	mux.HandleFunc("/metrics",
 		func(writer http.ResponseWriter, request *http.Request) {
-			for i, client := range clients {
-				fmt.Printf("Idx: %d, Hostname: %s\n", i, client)
-				client.CollectMetrics(writer, request)
+			errors := make([]string, 0)
+
+			for _, client := range clients {
+				if err := client.CollectMetrics(writer, request); err != nil {
+					errors = append(errors, err.Error())
+					fmt.Printf("Error %s\n", err)
+				}
 			}
+
+			if len(errors) == len(clients) {
+				writer.WriteHeader(http.StatusBadRequest)
+				body := strings.Join(errors, "\n")
+				_, _ = writer.Write([]byte(body))
+			}
+
+			promhttp.Handler().ServeHTTP(writer, request)
 		},
 	)
 

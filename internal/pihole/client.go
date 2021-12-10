@@ -14,7 +14,6 @@ import (
 
 	"github.com/eko/pihole-exporter/config"
 	"github.com/eko/pihole-exporter/internal/metrics"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 // Client struct is a PI-Hole client to request an instance of a PI-Hole ad blocker.
@@ -34,7 +33,7 @@ func NewClient(config *config.Config) *Client {
 
 	fmt.Printf("Creating client with config %s\n", config)
 
-	client := &Client{
+	return &Client{
 		config: config,
 		httpClient: http.Client{
 			CheckRedirect: func(req *http.Request, via []*http.Request) error {
@@ -42,16 +41,13 @@ func NewClient(config *config.Config) *Client {
 			},
 		},
 	}
-
-	fmt.Printf("Client created with config %s\n", client)
-
-	return client
 }
 
 func (c *Client) String() string {
 	return c.config.PIHoleHostname
 }
 
+/*
 // Metrics scrapes pihole and sets them
 func (c *Client) Metrics() http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
@@ -66,19 +62,18 @@ func (c *Client) Metrics() http.HandlerFunc {
 		log.Printf("New tick of statistics: %s", stats.ToString())
 		promhttp.Handler().ServeHTTP(writer, request)
 	}
-}
+}*/
 
-func (c *Client) CollectMetrics(writer http.ResponseWriter, request *http.Request) {
+func (c *Client) CollectMetrics(writer http.ResponseWriter, request *http.Request) error {
+
 	stats, err := c.getStatistics()
 	if err != nil {
-		writer.WriteHeader(http.StatusBadRequest)
-		_, _ = writer.Write([]byte(err.Error()))
-		return
+		return err
 	}
 	c.setMetrics(stats)
 
-	log.Printf("New tick of statistics: %s", stats.ToString())
-	promhttp.Handler().ServeHTTP(writer, request)
+	log.Printf("New tick of statistics from %s: %s", c, stats)
+	return nil
 }
 
 func (c *Client) GetHostname() string {

@@ -16,12 +16,8 @@ func main() {
 	metrics.Init()
 
 	serverDead := make(chan struct{})
-	clients := make([]*pihole.Client, 0, len(clientConfigs))
-	for i, _ := range clientConfigs {
-		client := pihole.NewClient(&clientConfigs[i])
-		clients = append(clients, client)
-		fmt.Printf("Append client %s\n", clients)
-	}
+
+	clients := buildClients(clientConfigs)
 
 	s := server.NewServer(envConf.Port, clients)
 	go func() {
@@ -42,4 +38,15 @@ func main() {
 	}
 
 	fmt.Println("pihole-exporter HTTP server stopped")
+}
+
+func buildClients(clientConfigs []config.Config) []*pihole.Client {
+	clients := make([]*pihole.Client, 0, len(clientConfigs))
+	for i := range clientConfigs {
+		clientConfig := &clientConfigs[i]
+
+		client := pihole.NewClient(clientConfig)
+		clients = append(clients, client)
+	}
+	return clients
 }
