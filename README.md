@@ -76,6 +76,33 @@ $ docker run \
   ekofr/pihole-exporter:latest
 ```
 
+A single instance of pihole-exporter can monitor multiple pi-holes instances.
+To do so, you can specify a list of hostnames, protocols, passwords/API tokens and ports by separating them with commas in their respective environment variable:
+
+```
+$ docker run \
+  -e 'PIHOLE_PROTOCOL="http,http,http" \
+  -e 'PIHOLE_HOSTNAME="192.168.1.2,192.168.1.3,192.168.1.4"' \
+  -e "PIHOLE_API_TOKEN="$API_TOKEN1,$API_TOKEN2,$API_TOKEN3" \
+  -e "PIHOLE_PORT="8080,8081,8080" \
+  -e 'INTERVAL=30s' \
+  -e 'PORT=9617' \
+  ekofr/pihole-exporter:latest
+```
+
+If port, protocol and API token/password is the same for all instances, you can specify them only once:
+
+```
+$ docker run \
+  -e 'PIHOLE_PROTOCOL=",http" \
+  -e 'PIHOLE_HOSTNAME="192.168.1.2,192.168.1.3,192.168.1.4"' \
+  -e "PIHOLE_API_TOKEN="$API_TOKEN" \
+  -e "PIHOLE_PORT="8080" \
+  -e 'INTERVAL=30s' \
+  -e 'PORT=9617' \
+  ekofr/pihole-exporter:latest
+```
+
 ### From sources
 
 Optionally, you can download and build it from the sources. You have to retrieve the project sources by using one of the following way:

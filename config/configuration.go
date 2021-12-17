@@ -97,15 +97,27 @@ func (c EnvConfig) Split() []Config {
 			PIHolePort:     c.PIHolePort[i],
 		}
 
-		if c.PIHoleApiToken != nil && len(c.PIHoleApiToken) > 0 {
-			if c.PIHoleApiToken[i] != "" {
-				config.PIHoleApiToken = c.PIHoleApiToken[i]
+		if c.PIHoleApiToken != nil {
+			if len(c.PIHoleApiToken) == 1 {
+				if c.PIHoleApiToken[0] != "" {
+					config.PIHoleApiToken = c.PIHoleApiToken[0]
+				}
+			} else if len(c.PIHoleApiToken) > 1 {
+				if c.PIHoleApiToken[i] != "" {
+					config.PIHoleApiToken = c.PIHoleApiToken[i]
+				}
 			}
 		}
 
-		if c.PIHolePassword != nil && len(c.PIHolePassword) > 0 {
-			if c.PIHolePassword[i] != "" {
-				config.PIHolePassword = c.PIHolePassword[i]
+		if c.PIHolePassword != nil {
+			if len(c.PIHolePassword) == 1 {
+				if c.PIHolePassword[0] != "" {
+					config.PIHolePassword = c.PIHolePassword[0]
+				}
+			} else if len(c.PIHolePassword) > 1 {
+				if c.PIHolePassword[i] != "" {
+					config.PIHolePassword = c.PIHolePassword[i]
+				}
 			}
 		}
 
