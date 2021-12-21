@@ -28,11 +28,6 @@ func NewServer(port uint16, clients []*pihole.Client) *Server {
 		httpServer: httpServer,
 	}
 
-	/*fmt.Printf("Server received clients -> %s\n", clients)
-	for i, client := range clients {
-		fmt.Printf("Server received clients -> idx: %d, Hostname: %s\n", i, &client)
-	}*/
-
 	mux.HandleFunc("/metrics",
 		func(writer http.ResponseWriter, request *http.Request) {
 			errors := make([]string, 0)
@@ -54,7 +49,6 @@ func NewServer(port uint16, clients []*pihole.Client) *Server {
 		},
 	)
 
-	//mux.Handle("/metrics", client.Metrics())
 	mux.Handle("/readiness", s.readinessHandler())
 	mux.Handle("/liveness", s.livenessHandler())
 
