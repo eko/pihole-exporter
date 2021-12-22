@@ -11,12 +11,15 @@ import (
 )
 
 func main() {
-	conf := config.Load()
+	envConf, clientConfigs := config.Load()
 
 	metrics.Init()
 
 	serverDead := make(chan struct{})
-	s := server.NewServer(conf.Port, pihole.NewClient(conf))
+
+	clients := buildClients(clientConfigs)
+
+	s := server.NewServer(envConf.Port, clients)
 	go func() {
 		s.ListenAndServe()
 		close(serverDead)
@@ -35,4 +38,15 @@ func main() {
 	}
 
 	fmt.Println("pihole-exporter HTTP server stopped")
+}
+
+func buildClients(clientConfigs []config.Config) []*pihole.Client {
+	clients := make([]*pihole.Client, 0, len(clientConfigs))
+	for i := range clientConfigs {
+		clientConfig := &clientConfigs[i]
+
+		client := pihole.NewClient(clientConfig)
+		clients = append(clients, client)
+	}
+	return clients
 }

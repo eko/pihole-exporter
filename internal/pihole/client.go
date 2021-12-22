@@ -14,7 +14,6 @@ import (
 
 	"github.com/eko/pihole-exporter/config"
 	"github.com/eko/pihole-exporter/internal/metrics"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 // Client struct is a PI-Hole client to request an instance of a PI-Hole ad blocker.
@@ -32,6 +31,8 @@ func NewClient(config *config.Config) *Client {
 		os.Exit(1)
 	}
 
+	fmt.Printf("Creating client with config %s\n", config)
+
 	return &Client{
 		config: config,
 		httpClient: http.Client{
@@ -42,6 +43,11 @@ func NewClient(config *config.Config) *Client {
 	}
 }
 
+func (c *Client) String() string {
+	return c.config.PIHoleHostname
+}
+
+/*
 // Metrics scrapes pihole and sets them
 func (c *Client) Metrics() http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
@@ -56,6 +62,22 @@ func (c *Client) Metrics() http.HandlerFunc {
 		log.Printf("New tick of statistics: %s", stats.ToString())
 		promhttp.Handler().ServeHTTP(writer, request)
 	}
+}*/
+
+func (c *Client) CollectMetrics(writer http.ResponseWriter, request *http.Request) error {
+
+	stats, err := c.getStatistics()
+	if err != nil {
+		return err
+	}
+	c.setMetrics(stats)
+
+	log.Printf("New tick of statistics from %s: %s", c, stats)
+	return nil
+}
+
+func (c *Client) GetHostname() string {
+	return c.config.PIHoleHostname
 }
 
 func (c *Client) setMetrics(stats *Stats) {
