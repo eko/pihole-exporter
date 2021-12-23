@@ -92,38 +92,45 @@ func (c EnvConfig) Split() []Config {
 
 	for i, hostname := range c.PIHoleHostname {
 		config := Config{
-			PIHoleHostname: hostname,
-			PIHoleProtocol: c.PIHoleProtocol[i],
+			PIHoleHostname: strings.TrimSpace(hostname),
 			PIHolePort:     c.PIHolePort[i],
 		}
 
-		if c.PIHoleApiToken != nil {
-			if len(c.PIHoleApiToken) == 1 {
-				if c.PIHoleApiToken[0] != "" {
-					config.PIHoleApiToken = c.PIHoleApiToken[0]
-				}
-			} else if len(c.PIHoleApiToken) > 1 {
-				if c.PIHoleApiToken[i] != "" {
-					config.PIHoleApiToken = c.PIHoleApiToken[i]
-				}
-			}
+		if hasData, data := extractConfig(c.PIHoleProtocol, i); hasData {
+			config.PIHoleProtocol = data
 		}
 
-		if c.PIHolePassword != nil {
-			if len(c.PIHolePassword) == 1 {
-				if c.PIHolePassword[0] != "" {
-					config.PIHolePassword = c.PIHolePassword[0]
-				}
-			} else if len(c.PIHolePassword) > 1 {
-				if c.PIHolePassword[i] != "" {
-					config.PIHolePassword = c.PIHolePassword[i]
-				}
-			}
+		if hasData, data := extractConfig(c.PIHoleApiToken, i); hasData {
+			config.PIHoleApiToken = data
+		}
+
+		if hasData, data := extractConfig(c.PIHoleApiToken, i); hasData {
+			config.PIHoleApiToken = data
+		}
+
+		if hasData, data := extractConfig(c.PIHolePassword, i); hasData {
+			config.PIHolePassword = data
 		}
 
 		result = append(result, config)
 	}
 	return result
+}
+
+func extractConfig(data []string, idx int) (bool, string) {
+	if len(data) == 1 {
+		v := strings.TrimSpace(data[0])
+		if v != "" {
+			return true, v
+		}
+	} else if len(data) > 1 {
+		v := strings.TrimSpace(data[idx])
+		if v != "" {
+			return true, v
+		}
+	}
+
+	return false, ""
 }
 
 func (c Config) hostnameURL() string {
