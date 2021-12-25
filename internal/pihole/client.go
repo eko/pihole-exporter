@@ -18,9 +18,10 @@ import (
 
 // Client struct is a PI-Hole client to request an instance of a PI-Hole ad blocker.
 type Client struct {
-	httpClient http.Client
-	interval   time.Duration
-	config     *config.Config
+	httpClient      http.Client
+	interval        time.Duration
+	config          *config.Config
+	MetricRetrieved chan bool
 }
 
 // NewClient method initializes a new PI-Hole client.
