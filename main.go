@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/eko/pihole-exporter/config"
 	"github.com/eko/pihole-exporter/internal/metrics"
@@ -11,7 +12,10 @@ import (
 )
 
 func main() {
-	envConf, clientConfigs := config.Load()
+	envConf, clientConfigs, err := config.Load()
+	if err != nil {
+		log.Fatal(err.Error())
+	}
 
 	metrics.Init()
 
