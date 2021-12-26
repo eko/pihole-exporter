@@ -22,32 +22,28 @@ type Server struct {
 // the different routes that will be used by Prometheus (metrics) or for monitoring (readiness, liveness).
 func NewServer(port uint16, clients []*pihole.Client) *Server {
 	mux := http.NewServeMux()
-	httpServer := &http.Server{Addr: ":" + strconv.Itoa(int(port)), Handler: mux}
+	httpServer := &http.Server{
+		Addr:    ":" + strconv.Itoa(int(port)),
+		Handler: mux,
+	}
 
 	s := &Server{
 		httpServer: httpServer,
 	}
 
-	mux.HandleFunc("/metrics",
-		func(writer http.ResponseWriter, request *http.Request) {
-			errors := make([]string, 0)
+	mux.HandleFunc("/metrics", func(writer http.ResponseWriter, request *http.Request) {
+		log.Printf("request.Header: %v\n", request.Header)
+		
+		for _, client := range clients {
+			go client.CollectMetricsAsync(writer, request)
+		}
 
-			for _, client := range clients {
-				if err := client.CollectMetrics(writer, request); err != nil {
-					errors = append(errors, err.Error())
-					fmt.Printf("Error %s\n", err)
-				}
-			}
+		for _, client := range clients {
+			log.Printf("Received %s from %s\n", <-client.Status, client.GetHostname())
+		}
 
-			if len(errors) == len(clients) {
-				writer.WriteHeader(http.StatusBadRequest)
-				body := strings.Join(errors, "\n")
-				_, _ = writer.Write([]byte(body))
-			}
-
-			promhttp.Handler().ServeHTTP(writer, request)
-		},
-	)
+		promhttp.Handler().ServeHTTP(writer, request)
+	})
 
 	mux.Handle("/readiness", s.readinessHandler())
 	mux.Handle("/liveness", s.livenessHandler())
@@ -71,6 +67,27 @@ func (s *Server) Stop() {
 	defer cancel()
 
 	s.httpServer.Shutdown(ctx)
+}
+
+func (s *Server) handleMetrics(clients []*pihole.Client) http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		errors := make([]string, 0)
+
+		for _, client := range clients {
+			if err := client.CollectMetrics(writer, request); err != nil {
+				errors = append(errors, err.Error())
+				fmt.Printf("Error %s\n", err)
+			}
+		}
+
+		if len(errors) == len(clients) {
+			writer.WriteHeader(http.StatusBadRequest)
+			body := strings.Join(errors, "\n")
+			_, _ = writer.Write([]byte(body))
+		}
+
+		promhttp.Handler().ServeHTTP(writer, request)
+	}
 }
 
 func (s *Server) readinessHandler() http.HandlerFunc {
