@@ -2,6 +2,7 @@ package config
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"reflect"
@@ -46,7 +47,7 @@ func getDefaultEnvConfig() *EnvConfig {
 }
 
 // Load method loads the configuration by using both flag or environment variables.
-func Load() (*EnvConfig, []Config) {
+func Load() (*EnvConfig, []Config, error) {
 	loaders := []backend.Backend{
 		env.NewBackend(),
 		flags.NewBackend(),
@@ -62,7 +63,11 @@ func Load() (*EnvConfig, []Config) {
 
 	cfg.show()
 
-	return cfg, cfg.Split()
+	if clientsConfig, err := cfg.Split(); err != nil {
+		return cfg, nil, err
+	} else {
+		return cfg, clientsConfig, nil
+	}
 }
 
 func (c *Config) String() string {
@@ -87,43 +92,64 @@ func (c Config) Validate() error {
 	return nil
 }
 
-func (c EnvConfig) Split() []Config {
-	result := make([]Config, 0, len(c.PIHoleHostname))
+func (c EnvConfig) Split() ([]Config, error) {
+	hostsCount := len(c.PIHoleHostname)
+	result := make([]Config, 0, hostsCount)
 
 	for i, hostname := range c.PIHoleHostname {
 		config := Config{
-			PIHoleHostname: hostname,
-			PIHoleProtocol: c.PIHoleProtocol[i],
-			PIHolePort:     c.PIHolePort[i],
+			PIHoleHostname: strings.TrimSpace(hostname),
 		}
 
-		if c.PIHoleApiToken != nil {
-			if len(c.PIHoleApiToken) == 1 {
-				if c.PIHoleApiToken[0] != "" {
-					config.PIHoleApiToken = c.PIHoleApiToken[0]
-				}
-			} else if len(c.PIHoleApiToken) > 1 {
-				if c.PIHoleApiToken[i] != "" {
-					config.PIHoleApiToken = c.PIHoleApiToken[i]
-				}
-			}
+		if len(c.PIHolePort) == 1 {
+			config.PIHolePort = c.PIHolePort[0]
+		} else if len(c.PIHolePort) == hostsCount {
+			config.PIHolePort = c.PIHolePort[i]
+		} else if len(c.PIHolePort) != 0 {
+			return nil, errors.New("Wrong number of ports. Port can be empty to use default, one value to use for all hosts, or match the number of hosts")
 		}
 
-		if c.PIHolePassword != nil {
-			if len(c.PIHolePassword) == 1 {
-				if c.PIHolePassword[0] != "" {
-					config.PIHolePassword = c.PIHolePassword[0]
-				}
-			} else if len(c.PIHolePassword) > 1 {
-				if c.PIHolePassword[i] != "" {
-					config.PIHolePassword = c.PIHolePassword[i]
-				}
-			}
+		if hasData, data, isValid := extractStringConfig(c.PIHoleProtocol, i, hostsCount); hasData {
+			config.PIHoleProtocol = data
+		} else if !isValid {
+			return nil, errors.New("Wrong number of PIHoleProtocol. PIHoleProtocol can be empty to use default, one value to use for all hosts, or match the number of hosts")
+		}
+
+		if hasData, data, isValid := extractStringConfig(c.PIHoleApiToken, i, hostsCount); hasData {
+			config.PIHoleApiToken = data
+		} else if !isValid {
+			return nil, errors.New(fmt.Sprintf("Wrong number of PIHoleApiToken %d (Hosts: %d). PIHoleApiToken can be empty to use default, one value to use for all hosts, or match the number of hosts", len(c.PIHoleApiToken), hostsCount))
+		}
+
+		if hasData, data, isValid := extractStringConfig(c.PIHolePassword, i, hostsCount); hasData {
+			config.PIHolePassword = data
+		} else if !isValid {
+			return nil, errors.New("Wrong number of PIHolePassword. PIHolePassword can be empty to use default, one value to use for all hosts, or match the number of hosts")
 		}
 
 		result = append(result, config)
 	}
-	return result
+
+	return result, nil
+}
+
+func extractStringConfig(data []string, idx int, hostsCount int) (bool, string, bool) {
+	if len(data) == 1 {
+		v := strings.TrimSpace(data[0])
+		if v != "" {
+			return true, v, true
+		}
+	} else if len(data) == hostsCount {
+		v := strings.TrimSpace(data[idx])
+		if v != "" {
+			return true, v, true
+		}
+	} else if len(data) != 0 { //Host count missmatch
+		return false, "", false
+	}
+
+	// Empty
+	return false, "", true
 }
 
 func (c Config) hostnameURL() string {
