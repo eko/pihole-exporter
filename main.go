@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/eko/pihole-exporter/config"
@@ -41,7 +40,7 @@ func main() {
 	case <-serverDead:
 	}
 
-	fmt.Println("pihole-exporter HTTP server stopped")
+	log.Println("pihole-exporter HTTP server stopped")
 }
 
 func buildClients(clientConfigs []config.Config) []*pihole.Client {

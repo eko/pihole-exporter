@@ -58,7 +58,7 @@ func NewClient(config *config.Config) *Client {
 		os.Exit(1)
 	}
 
-	fmt.Printf("Creating client with config %s\n", config)
+	log.Printf("Creating client with config %s\n", config)
 
 	return &Client{
 		config: config,
