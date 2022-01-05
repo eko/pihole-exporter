@@ -51,7 +51,7 @@ type Client struct {
 }
 
 // NewClient method initializes a new PI-Hole client.
-func NewClient(config *config.Config) *Client {
+func NewClient(config *config.Config, envConfig *config.EnvConfig) *Client {
 	err := config.Validate()
 	if err != nil {
 		log.Print(err)
@@ -66,6 +66,7 @@ func NewClient(config *config.Config) *Client {
 			CheckRedirect: func(req *http.Request, via []*http.Request) error {
 				return http.ErrUseLastResponse
 			},
+			Timeout: envConfig.Timeout,
 		},
 		Status: make(chan *ClientChannel, 1),
 	}
