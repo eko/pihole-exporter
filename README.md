@@ -43,7 +43,6 @@ You can run it using the following example and pass configuration environment va
 $ docker run \
   -e 'PIHOLE_HOSTNAME=192.168.1.2' \
   -e 'PIHOLE_PASSWORD=mypassword' \
-  -e 'INTERVAL=30s' \
   -e 'PORT=9617' \
   -p 9617:9617 \
   ekofr/pihole-exporter:latest
@@ -56,7 +55,6 @@ $ API_TOKEN=$(awk -F= -v key="WEBPASSWORD" '$1==key {print $2}' /etc/pihole/setu
 $ docker run \
   -e 'PIHOLE_HOSTNAME=192.168.1.2' \
   -e "PIHOLE_API_TOKEN=$API_TOKEN" \
-  -e 'INTERVAL=30s' \
   -e 'PORT=9617' \
   ekofr/pihole-exporter:latest
 ```
@@ -69,7 +67,6 @@ $ docker run \
   -e 'PIHOLE_PROTOCOL=https' \
   -e 'PIHOLE_HOSTNAME=192.168.1.2' \
   -e 'PIHOLE_PASSWORD=mypassword' \
-  -e 'INTERVAL=30s' \
   -e 'PORT=9617' \
   -v '/etc/ssl/certs:/etc/ssl/certs:ro' \
   -p 9617:9617 \
@@ -85,7 +82,6 @@ $ docker run \
   -e 'PIHOLE_HOSTNAME="192.168.1.2,192.168.1.3,192.168.1.4"' \
   -e "PIHOLE_API_TOKEN="$API_TOKEN1,$API_TOKEN2,$API_TOKEN3" \
   -e "PIHOLE_PORT="8080,8081,8080" \
-  -e 'INTERVAL=30s' \
   -e 'PORT=9617' \
   ekofr/pihole-exporter:latest
 ```
@@ -98,7 +94,6 @@ $ docker run \
   -e 'PIHOLE_HOSTNAME="192.168.1.2,192.168.1.3,192.168.1.4"' \
   -e "PIHOLE_API_TOKEN="$API_TOKEN" \
   -e "PIHOLE_PORT="8080" \
-  -e 'INTERVAL=30s' \
   -e 'PORT=9617' \
   ekofr/pihole-exporter:latest
 ```
@@ -147,7 +142,7 @@ $ ./pihole_exporter -pihole_hostname 192.168.1.10 -pihole_api_token $API_TOKEN
 2019/05/09 20:19:52 PIHoleHostname : 192.168.1.10
 2019/05/09 20:19:52 PIHolePassword : azerty
 2019/05/09 20:19:52 Port : 9617
-2019/05/09 20:19:52 Interval : 10s
+2019/05/09 20:19:52 Timeout : 5s
 2019/05/09 20:19:52 ------------------------------------
 2019/05/09 20:19:52 New Prometheus metric registered: domains_blocked
 2019/05/09 20:19:52 New Prometheus metric registered: dns_queries_today
@@ -182,15 +177,14 @@ scrape_configs:
 
 ## Available CLI options
 ```bash
-# Interval of time the exporter will fetch data from PI-Hole
-  -interval duration (optional) (default 10s)
-
-# Hostname of the Raspberry PI where PI-Hole is installed
+# Hostname of the host(s) where PI-Hole is installed
   -pihole_hostname string (optional) (default "127.0.0.1")
 
 # Password defined on the PI-Hole interface
   -pihole_password string (optional)
 
+# Timeout to connect and retrieve data from a Pi-Hole instance
+  -timeout duration (optional) (default 5s)
 
 # WEBPASSWORD / api token defined on the PI-Hole interface at `/etc/pihole/setupVars.conf`
   -pihole_api_token string (optional)
