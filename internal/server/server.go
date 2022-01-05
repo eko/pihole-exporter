@@ -2,7 +2,6 @@ package server
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -10,6 +9,7 @@ import (
 
 	"github.com/eko/pihole-exporter/internal/pihole"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
 )
 
@@ -32,14 +32,17 @@ func NewServer(port uint16, clients []*pihole.Client) *Server {
 	}
 
 	mux.HandleFunc("/metrics", func(writer http.ResponseWriter, request *http.Request) {
-		log.Printf("request.Header: %v\n", request.Header)
-		
+		log.Debug("request.Header: %v\n", request.Header)
+
 		for _, client := range clients {
 			go client.CollectMetricsAsync(writer, request)
 		}
 
 		for _, client := range clients {
-			log.Printf("Received %s from %s\n", <-client.Status, client.GetHostname())
+			status := <-client.Status
+			if status.Status == pihole.MetricsCollectionError {
+				log.Error("Received %s from %s\n", <-client.Status, client.GetHostname())
+			}
 		}
 
 		promhttp.Handler().ServeHTTP(writer, request)
@@ -76,7 +79,7 @@ func (s *Server) handleMetrics(clients []*pihole.Client) http.HandlerFunc {
 		for _, client := range clients {
 			if err := client.CollectMetrics(writer, request); err != nil {
 				errors = append(errors, err.Error())
-				fmt.Printf("Error %s\n", err)
+				fmt.Errorf("Error %s\n", err)
 			}
 		}
 

@@ -4,13 +4,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
 	"strconv"
 	"strings"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/eko/pihole-exporter/config"
 	"github.com/eko/pihole-exporter/internal/metrics"
@@ -54,11 +56,18 @@ type Client struct {
 func NewClient(config *config.Config) *Client {
 	err := config.Validate()
 	if err != nil {
-		log.Print(err)
+		log.Error(err)
 		os.Exit(1)
 	}
 
-	fmt.Printf("Creating client with config %s\n", config)
+	log.Info("Creating client with config ", config)
+
+	netTransport := &http.Transport{
+		Dial: (&net.Dialer{
+			Timeout: 5 * time.Second,
+		}).Dial,
+		TLSHandshakeTimeout: 5 * time.Second,
+	}
 
 	return &Client{
 		config: config,
@@ -66,6 +75,8 @@ func NewClient(config *config.Config) *Client {
 			CheckRedirect: func(req *http.Request, via []*http.Request) error {
 				return http.ErrUseLastResponse
 			},
+			Timeout:   10 * time.Second,
+			Transport: netTransport,
 		},
 		Status: make(chan *ClientChannel, 1),
 	}
@@ -76,11 +87,11 @@ func (c *Client) String() string {
 }
 
 func (c *Client) CollectMetricsAsync(writer http.ResponseWriter, request *http.Request) {
-	log.Printf("Collecting from %s", c.config.PIHoleHostname)
+	log.Infof("Collecting from %s", c.config.PIHoleHostname)
 	if stats, err := c.getStatistics(); err == nil {
 		c.setMetrics(stats)
 		c.Status <- &ClientChannel{Status: MetricsCollectionSuccess, Err: nil}
-		log.Printf("New tick of statistics from %s: %s", c.config.PIHoleHostname, stats)
+		log.Infof("New tick of statistics from %s: %s", c.config.PIHoleHostname, stats)
 	} else {
 		c.Status <- &ClientChannel{Status: MetricsCollectionError, Err: err}
 	}
@@ -92,7 +103,7 @@ func (c *Client) CollectMetrics(writer http.ResponseWriter, request *http.Reques
 		return err
 	}
 	c.setMetrics(stats)
-	log.Printf("New tick of statistics from %s: %s", c.config.PIHoleHostname, stats)
+	log.Infof("New tick of statistics from %s: %s", c.config.PIHoleHostname, stats)
 	return nil
 }
 
@@ -157,7 +168,7 @@ func (c *Client) getPHPSessionID() (sessionID string) {
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		log.Printf("An error has occured during login to PI-Hole: %v", err)
+		log.Error("An error has occured during login to PI-Hole: %v", err)
 	}
 
 	for _, cookie := range resp.Cookies() {

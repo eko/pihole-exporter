@@ -2,7 +2,10 @@ package main
 
 import (
 	"fmt"
-	"log"
+
+	"time"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/eko/pihole-exporter/config"
 	"github.com/eko/pihole-exporter/internal/metrics"
@@ -12,6 +15,11 @@ import (
 )
 
 func main() {
+	log.SetFormatter(&log.TextFormatter{
+		DisableColors:   false,
+		FullTimestamp:   true,
+		TimestampFormat: time.RFC3339,
+	})
 	envConf, clientConfigs, err := config.Load()
 	if err != nil {
 		log.Fatal(err.Error())
