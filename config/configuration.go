@@ -78,7 +78,13 @@ func (c *Config) String() string {
 	for i := 0; i < fields.NumField(); i++ {
 		valueField := fields.Field(i)
 		typeField := fields.Type().Field(i)
-		buffer[i] = fmt.Sprintf("%s=%v", typeField.Name, valueField.Interface())
+		if typeField.Name != "PIHolePassword" && typeField.Name != "PIHoleApiToken" {
+			buffer[i] = fmt.Sprintf("%s=%v", typeField.Name, valueField.Interface())
+		} else {
+			if valueField.Len() > 0 {
+				buffer[i] = fmt.Sprintf("%s=%s", typeField.Name, "*****")
+			}
+		}
 	}
 
 	return fmt.Sprintf("<Config@%X %s>", &c, strings.Join(buffer, ", "))
