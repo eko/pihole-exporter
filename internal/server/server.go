@@ -33,13 +33,16 @@ func NewServer(port uint16, clients []*pihole.Client) *Server {
 
 	mux.HandleFunc("/metrics", func(writer http.ResponseWriter, request *http.Request) {
 		log.Printf("request.Header: %v\n", request.Header)
-		
+
 		for _, client := range clients {
 			go client.CollectMetricsAsync(writer, request)
 		}
 
 		for _, client := range clients {
-			log.Printf("Received %s from %s\n", <-client.Status, client.GetHostname())
+			status := <-client.Status
+			if status.Status == pihole.MetricsCollectionError {
+				log.Printf("An error occured while contacting %s: %s", client.GetHostname(), status.Err.Error())
+			}
 		}
 
 		promhttp.Handler().ServeHTTP(writer, request)
