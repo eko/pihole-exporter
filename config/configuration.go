@@ -80,8 +80,7 @@ func (c *Config) String() string {
 		typeField := fields.Type().Field(i)
 		if typeField.Name != "PIHolePassword" && typeField.Name != "PIHoleApiToken" {
 			buffer[i] = fmt.Sprintf("%s=%v", typeField.Name, valueField.Interface())
-		} else {
-			if valueField.Len() > 0 {
+		} else if valueField.Len() > 0 {
 				buffer[i] = fmt.Sprintf("%s=%s", typeField.Name, "*****")
 			}
 		}
