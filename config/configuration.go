@@ -85,6 +85,7 @@ func (c *Config) String() string {
 		}
 	}
 
+	buffer = removeEmptyString(buffer)
 	return fmt.Sprintf("<Config@%X %s>", &c, strings.Join(buffer, ", "))
 }
 
@@ -154,6 +155,16 @@ func extractStringConfig(data []string, idx int, hostsCount int) (bool, string, 
 
 	// Empty
 	return false, "", true
+}
+
+func removeEmptyString(source []string) []string {
+	var result []string
+	for _, s := range source {
+		if s != "" {
+			result = append(result, s)
+		}
+	}
+	return result
 }
 
 func (c Config) hostnameURL() string {
