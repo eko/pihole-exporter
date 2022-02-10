@@ -159,7 +159,7 @@ func (c *Client) getPHPSessionID() (sessionID string) {
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		log.Error("An error has occured during login to PI-Hole: %v", err)
+		log.Errorf("An error has occured during login to PI-Hole: %v", err)
 	}
 
 	for _, cookie := range resp.Cookies() {
