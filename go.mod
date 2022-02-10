@@ -5,6 +5,7 @@ go 1.17
 require (
 	github.com/heetch/confita v0.10.0
 	github.com/prometheus/client_golang v1.12.1
+	github.com/sirupsen/logrus v1.6.0
 	github.com/stretchr/testify v1.7.0
 	github.com/xonvanetta/shutdown v0.0.3
 	golang.org/x/net v0.0.0-20210525063256-abc453219eb5

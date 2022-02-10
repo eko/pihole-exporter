@@ -3,10 +3,6 @@ package main
 import (
 	"log"
 
-	"time"
-
-	log "github.com/sirupsen/logrus"
-
 	"github.com/eko/pihole-exporter/config"
 	"github.com/eko/pihole-exporter/internal/metrics"
 	"github.com/eko/pihole-exporter/internal/pihole"
