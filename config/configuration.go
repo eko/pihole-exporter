@@ -32,7 +32,7 @@ type EnvConfig struct {
 	PIHolePassword []string      `config:"pihole_password"`
 	PIHoleApiToken []string      `config:"pihole_api_token"`
 	Port           uint16        `config:"port"`
-	Interval       time.Duration `config:"interval"`
+	Timeout        time.Duration `config:"timeout"`
 }
 
 func getDefaultEnvConfig() *EnvConfig {
@@ -43,7 +43,7 @@ func getDefaultEnvConfig() *EnvConfig {
 		PIHolePassword: []string{},
 		PIHoleApiToken: []string{},
 		Port:           9617,
-		Interval:       10 * time.Second,
+		Timeout:        5 * time.Second,
 	}
 }
 
@@ -79,9 +79,14 @@ func (c *Config) String() string {
 	for i := 0; i < fields.NumField(); i++ {
 		valueField := fields.Field(i)
 		typeField := fields.Type().Field(i)
-		buffer[i] = fmt.Sprintf("%s=%v", typeField.Name, valueField.Interface())
+		if typeField.Name != "PIHolePassword" && typeField.Name != "PIHoleApiToken" {
+			buffer[i] = fmt.Sprintf("%s=%v", typeField.Name, valueField.Interface())
+		} else if valueField.Len() > 0 {
+			buffer[i] = fmt.Sprintf("%s=%s", typeField.Name, "*****")
+		}
 	}
 
+	buffer = removeEmptyString(buffer)
 	return fmt.Sprintf("<Config@%X %s>", &c, strings.Join(buffer, ", "))
 }
 
@@ -151,6 +156,16 @@ func extractStringConfig(data []string, idx int, hostsCount int) (bool, string, 
 
 	// Empty
 	return false, "", true
+}
+
+func removeEmptyString(source []string) []string {
+	var result []string
+	for _, s := range source {
+		if s != "" {
+			result = append(result, s)
+		}
+	}
+	return result
 }
 
 func (c Config) hostnameURL() string {

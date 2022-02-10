@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"log"
 
 	"time"
 
@@ -15,11 +15,6 @@ import (
 )
 
 func main() {
-	log.SetFormatter(&log.TextFormatter{
-		DisableColors:   false,
-		FullTimestamp:   true,
-		TimestampFormat: time.RFC3339,
-	})
 	envConf, clientConfigs, err := config.Load()
 	if err != nil {
 		log.Fatal(err.Error())
@@ -29,7 +24,7 @@ func main() {
 
 	serverDead := make(chan struct{})
 
-	clients := buildClients(clientConfigs)
+	clients := buildClients(clientConfigs, envConf)
 
 	s := server.NewServer(envConf.Port, clients)
 	go func() {
@@ -49,15 +44,15 @@ func main() {
 	case <-serverDead:
 	}
 
-	fmt.Println("pihole-exporter HTTP server stopped")
+	log.Println("pihole-exporter HTTP server stopped")
 }
 
-func buildClients(clientConfigs []config.Config) []*pihole.Client {
+func buildClients(clientConfigs []config.Config, envConfig *config.EnvConfig) []*pihole.Client {
 	clients := make([]*pihole.Client, 0, len(clientConfigs))
 	for i := range clientConfigs {
 		clientConfig := &clientConfigs[i]
 
-		client := pihole.NewClient(clientConfig)
+		client := pihole.NewClient(clientConfig, envConfig)
 		clients = append(clients, client)
 	}
 	return clients

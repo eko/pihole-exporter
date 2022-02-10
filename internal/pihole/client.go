@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -53,21 +52,14 @@ type Client struct {
 }
 
 // NewClient method initializes a new PI-Hole client.
-func NewClient(config *config.Config) *Client {
+func NewClient(config *config.Config, envConfig *config.EnvConfig) *Client {
 	err := config.Validate()
 	if err != nil {
 		log.Error(err)
 		os.Exit(1)
 	}
 
-	log.Info("Creating client with config ", config)
-
-	netTransport := &http.Transport{
-		Dial: (&net.Dialer{
-			Timeout: 5 * time.Second,
-		}).Dial,
-		TLSHandshakeTimeout: 5 * time.Second,
-	}
+	log.Printf("Creating client with config %s\n", config)
 
 	return &Client{
 		config: config,
@@ -75,8 +67,7 @@ func NewClient(config *config.Config) *Client {
 			CheckRedirect: func(req *http.Request, via []*http.Request) error {
 				return http.ErrUseLastResponse
 			},
-			Timeout:   10 * time.Second,
-			Transport: netTransport,
+			Timeout: envConfig.Timeout,
 		},
 		Status: make(chan *ClientChannel, 1),
 	}
@@ -87,11 +78,11 @@ func (c *Client) String() string {
 }
 
 func (c *Client) CollectMetricsAsync(writer http.ResponseWriter, request *http.Request) {
-	log.Infof("Collecting from %s", c.config.PIHoleHostname)
+	log.Printf("Collecting from %s", c.config.PIHoleHostname)
 	if stats, err := c.getStatistics(); err == nil {
 		c.setMetrics(stats)
 		c.Status <- &ClientChannel{Status: MetricsCollectionSuccess, Err: nil}
-		log.Infof("New tick of statistics from %s: %s", c.config.PIHoleHostname, stats)
+		log.Printf("New tick of statistics from %s: %s", c.config.PIHoleHostname, stats)
 	} else {
 		c.Status <- &ClientChannel{Status: MetricsCollectionError, Err: err}
 	}
@@ -103,7 +94,7 @@ func (c *Client) CollectMetrics(writer http.ResponseWriter, request *http.Reques
 		return err
 	}
 	c.setMetrics(stats)
-	log.Infof("New tick of statistics from %s: %s", c.config.PIHoleHostname, stats)
+	log.Printf("New tick of statistics from %s: %s", c.config.PIHoleHostname, stats)
 	return nil
 }
 
