@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -12,22 +11,51 @@ import (
 	"strings"
 	"time"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/eko/pihole-exporter/config"
 	"github.com/eko/pihole-exporter/internal/metrics"
 )
+
+type ClientStatus byte
+
+const (
+	MetricsCollectionInProgress ClientStatus = iota
+	MetricsCollectionSuccess
+	MetricsCollectionError
+	MetricsCollectionTimeout
+)
+
+func (status ClientStatus) String() string {
+	return []string{"MetricsCollectionInProgress", "MetricsCollectionSuccess", "MetricsCollectionError", "MetricsCollectionTimeout"}[status]
+}
+
+type ClientChannel struct {
+	Status ClientStatus
+	Err    error
+}
+
+func (c *ClientChannel) String() string {
+	if c.Err != nil {
+		return fmt.Sprintf("ClientChannel<Status: %s, Err: '%s'>", c.Status, c.Err.Error())
+	} else {
+		return fmt.Sprintf("ClientChannel<Status: %s, Err: <nil>>", c.Status)
+	}
+}
 
 // Client struct is a PI-Hole client to request an instance of a PI-Hole ad blocker.
 type Client struct {
 	httpClient http.Client
 	interval   time.Duration
 	config     *config.Config
+	Status     chan *ClientChannel
 }
 
 // NewClient method initializes a new PI-Hole client.
-func NewClient(config *config.Config) *Client {
+func NewClient(config *config.Config, envConfig *config.EnvConfig) *Client {
 	err := config.Validate()
 	if err != nil {
-		log.Print(err)
+		log.Error(err)
 		os.Exit(1)
 	}
 
@@ -39,7 +67,9 @@ func NewClient(config *config.Config) *Client {
 			CheckRedirect: func(req *http.Request, via []*http.Request) error {
 				return http.ErrUseLastResponse
 			},
+			Timeout: envConfig.Timeout,
 		},
+		Status: make(chan *ClientChannel, 1),
 	}
 }
 
@@ -47,32 +77,24 @@ func (c *Client) String() string {
 	return c.config.PIHoleHostname
 }
 
-/*
-// Metrics scrapes pihole and sets them
-func (c *Client) Metrics() http.HandlerFunc {
-	return func(writer http.ResponseWriter, request *http.Request) {
-		stats, err := c.getStatistics()
-		if err != nil {
-			writer.WriteHeader(http.StatusBadRequest)
-			_, _ = writer.Write([]byte(err.Error()))
-			return
-		}
+func (c *Client) CollectMetricsAsync(writer http.ResponseWriter, request *http.Request) {
+	log.Printf("Collecting from %s", c.config.PIHoleHostname)
+	if stats, err := c.getStatistics(); err == nil {
 		c.setMetrics(stats)
-
-		log.Printf("New tick of statistics: %s", stats.ToString())
-		promhttp.Handler().ServeHTTP(writer, request)
+		c.Status <- &ClientChannel{Status: MetricsCollectionSuccess, Err: nil}
+		log.Printf("New tick of statistics from %s: %s", c.config.PIHoleHostname, stats)
+	} else {
+		c.Status <- &ClientChannel{Status: MetricsCollectionError, Err: err}
 	}
-}*/
+}
 
 func (c *Client) CollectMetrics(writer http.ResponseWriter, request *http.Request) error {
-
 	stats, err := c.getStatistics()
 	if err != nil {
 		return err
 	}
 	c.setMetrics(stats)
-
-	log.Printf("New tick of statistics from %s: %s", c, stats)
+	log.Printf("New tick of statistics from %s: %s", c.config.PIHoleHostname, stats)
 	return nil
 }
 
@@ -137,7 +159,7 @@ func (c *Client) getPHPSessionID() (sessionID string) {
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		log.Printf("An error has occured during login to PI-Hole: %v", err)
+		log.Errorf("An error has occured during login to PI-Hole: %v", err)
 	}
 
 	for _, cookie := range resp.Cookies() {
