@@ -52,6 +52,12 @@ jobs:
           --tag ekofr/pihole-exporter:${{ steps.get_version.outputs.TAG_NAME }} \
           .
 
+    - name: Tag and push latest tag on master push
+      if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+      run: |
+        docker image tag ekofr/pihole-exporter:${{ steps.get_version.outputs.TAG_NAME }} ekofr/pihole-exporter:latest
+        docker image push ekofr/pihole-exporter:latest
+
   release:
     runs-on: ubuntu-latest
     needs: test
