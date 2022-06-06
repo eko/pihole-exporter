@@ -1,6 +1,6 @@
 module github.com/eko/pihole-exporter
 
-go 1.17
+go 1.18
 
 require (
 	github.com/heetch/confita v0.10.0
