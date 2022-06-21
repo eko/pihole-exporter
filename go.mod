@@ -6,7 +6,7 @@ require (
 	github.com/heetch/confita v0.10.0
 	github.com/prometheus/client_golang v1.12.2
 	github.com/sirupsen/logrus v1.8.1
-	github.com/stretchr/testify v1.7.2
+	github.com/stretchr/testify v1.7.4
 	github.com/xonvanetta/shutdown v0.0.3
 	golang.org/x/net v0.0.0-20210525063256-abc453219eb5
 )
