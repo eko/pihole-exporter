@@ -8,7 +8,10 @@ This is a Prometheus exporter for [PI-Hole](https://pi-hole.net/)'s Raspberry PI
 
 ![Grafana dashboard](https://raw.githubusercontent.com/eko/pihole-exporter/master/dashboard.jpg)
 
-Grafana dashboard is [available here](https://grafana.com/dashboards/10176) on the Grafana dashboard website and also [here](https://raw.githubusercontent.com/eko/pihole-exporter/master/grafana/dashboard.json) on the GitHub repository.
+Available Grafana Dasboards:
+
+* Prometheus: [Grafana Labs](https://grafana.com/dashboards/10176) / [JSON/Github](https://raw.githubusercontent.com/eko/pihole-exporter/master/grafana/dashboard.json) --> [Preview](https://raw.githubusercontent.com/eko/pihole-exporter/master/dashboard.jpg)
+* InfluxDB 2 (Flux): [Grafana Labs](https://grafana.com/dashboards/17094) / [JSON/Github](https://raw.githubusercontent.com/eko/pihole-exporter/master/grafana/dashboard-influxdb2.json) --> [Preview](https://raw.githubusercontent.com/eko/pihole-exporter/master/dashboard-influxdb2.jpg)
 
 ## Prerequisites
 
