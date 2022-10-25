@@ -4,11 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"reflect"
 	"runtime"
 	"strings"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/heetch/confita"
 	"github.com/heetch/confita/backend"
@@ -188,26 +189,26 @@ func (c Config) PIHoleLoginURL() string {
 
 func (c EnvConfig) show() {
 	val := reflect.ValueOf(&c).Elem()
-	log.Println("------------------------------------")
-	log.Println("-  PI-Hole exporter configuration  -")
-	log.Println("------------------------------------")
-	log.Printf("Go version: %s", runtime.Version())
+	log.Info("------------------------------------")
+	log.Info("-  PI-Hole exporter configuration  -")
+	log.Info("------------------------------------")
+	log.Info("Go version: ", runtime.Version())
 	for i := 0; i < val.NumField(); i++ {
 		valueField := val.Field(i)
 		typeField := val.Type().Field(i)
 
 		// Do not print password or api token but do print the authentication method
 		if typeField.Name != "PIHolePassword" && typeField.Name != "PIHoleApiToken" {
-			log.Println(fmt.Sprintf("%s : %v", typeField.Name, valueField.Interface()))
+			log.Info(fmt.Sprintf("%s : %v", typeField.Name, valueField.Interface()))
 		} else {
 			showAuthenticationMethod(typeField.Name, valueField.Len())
 		}
 	}
-	log.Println("------------------------------------")
+	log.Info("------------------------------------")
 }
 
 func showAuthenticationMethod(name string, length int) {
 	if length > 0 {
-		log.Println(fmt.Sprintf("Pi-Hole Authentication Method : %s", name))
+		log.Info(fmt.Sprintf("Pi-Hole Authentication Method : %s", name))
 	}
 }

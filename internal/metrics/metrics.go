@@ -1,9 +1,8 @@
 package metrics
 
 import (
-	"log"
-
 	"github.com/prometheus/client_golang/prometheus"
+	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -201,5 +200,5 @@ func Init() {
 
 func initMetric(name string, metric *prometheus.GaugeVec) {
 	prometheus.MustRegister(metric)
-	log.Printf("New Prometheus metric registered: %s", name)
+	log.Info("New Prometheus metric registered: ", name)
 }

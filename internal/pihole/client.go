@@ -4,13 +4,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
 	"strconv"
 	"strings"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/eko/pihole-exporter/config"
 	"github.com/eko/pihole-exporter/internal/metrics"
@@ -54,7 +55,7 @@ type Client struct {
 func NewClient(config *config.Config, envConfig *config.EnvConfig) *Client {
 	err := config.Validate()
 	if err != nil {
-		log.Print(err)
+		log.Error(err)
 		os.Exit(1)
 	}
 
@@ -158,7 +159,7 @@ func (c *Client) getPHPSessionID() (sessionID string) {
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		log.Printf("An error has occured during login to PI-Hole: %v", err)
+		log.Errorf("An error has occured during login to PI-Hole: %v", err)
 	}
 
 	for _, cookie := range resp.Cookies() {
