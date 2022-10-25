@@ -12,7 +12,3 @@ updates:
     interval: daily
     time: "04:00"
   open-pull-requests-limit: 10
-  ignore:
-  - dependency-name: golang
-    versions:
-    - 1.16.1.pre.alpine3.12

@@ -125,6 +125,12 @@ func (c *Client) setMetrics(stats *Stats) {
 	}
 	metrics.Status.WithLabelValues(c.config.PIHoleHostname).Set(float64(isEnabled))
 
+	// Pi-Hole returns a subset of stats when Auth is missing or incorrect.
+	// This provides a warning to users that metrics are not complete.
+	if len(stats.TopQueries) == 0 {
+		log.Warnf("Invalid Authentication - Some metrics may be missing. Please confirm your PI-Hole API token / Password for %s", c.config.PIHoleHostname)
+	}
+
 	for domain, value := range stats.TopQueries {
 		metrics.TopQueries.WithLabelValues(c.config.PIHoleHostname, domain).Set(float64(value))
 	}

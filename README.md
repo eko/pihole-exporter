@@ -8,7 +8,10 @@ This is a Prometheus exporter for [PI-Hole](https://pi-hole.net/)'s Raspberry PI
 
 ![Grafana dashboard](https://raw.githubusercontent.com/eko/pihole-exporter/master/dashboard.jpg)
 
-Grafana dashboard is [available here](https://grafana.com/dashboards/10176) on the Grafana dashboard website and also [here](https://raw.githubusercontent.com/eko/pihole-exporter/master/grafana/dashboard.json) on the GitHub repository.
+Available Grafana Dasboards:
+
+* Prometheus: [Grafana Labs](https://grafana.com/dashboards/10176) / [JSON/Github](https://raw.githubusercontent.com/eko/pihole-exporter/master/grafana/dashboard.json) --> [Preview](https://raw.githubusercontent.com/eko/pihole-exporter/master/dashboard.jpg)
+* InfluxDB 2 (Flux): [Grafana Labs](https://grafana.com/dashboards/17094) / [JSON/Github](https://raw.githubusercontent.com/eko/pihole-exporter/master/grafana/dashboard-influxdb2.json) --> [Preview](https://raw.githubusercontent.com/eko/pihole-exporter/master/dashboard-influxdb2.png)
 
 ## Prerequisites
 
@@ -56,6 +59,7 @@ $ docker run \
   -e 'PIHOLE_HOSTNAME=192.168.1.2' \
   -e "PIHOLE_API_TOKEN=$API_TOKEN" \
   -e 'PORT=9617' \
+  -p 9617:9617 \
   ekofr/pihole-exporter:latest
 ```
 
@@ -83,6 +87,7 @@ $ docker run \
   -e "PIHOLE_API_TOKEN="$API_TOKEN1,$API_TOKEN2,$API_TOKEN3" \
   -e "PIHOLE_PORT="8080,8081,8080" \
   -e 'PORT=9617' \
+  -p 9617:9617 \
   ekofr/pihole-exporter:latest
 ```
 
@@ -95,6 +100,7 @@ $ docker run \
   -e "PIHOLE_API_TOKEN="$API_TOKEN" \
   -e "PIHOLE_PORT="8080" \
   -e 'PORT=9617' \
+  -p 9617:9617 \
   ekofr/pihole-exporter:latest
 ```
 
