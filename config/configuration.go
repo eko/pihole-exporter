@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"runtime"
 	"strings"
 	"time"
 
@@ -90,7 +91,7 @@ func (c *Config) String() string {
 	return fmt.Sprintf("<Config@%X %s>", &c, strings.Join(buffer, ", "))
 }
 
-//Validate check if the config is valid
+// Validate check if the config is valid
 func (c Config) Validate() error {
 	if c.PIHoleProtocol != "http" && c.PIHoleProtocol != "https" {
 		return fmt.Errorf("protocol %s is invalid. Must be http or https", c.PIHoleProtocol)
@@ -176,12 +177,12 @@ func (c Config) hostnameURL() string {
 	return s
 }
 
-//PIHoleStatsURL returns the stats url
+// PIHoleStatsURL returns the stats url
 func (c Config) PIHoleStatsURL() string {
 	return c.hostnameURL() + "/admin/api.php?summaryRaw&overTimeData&topItems&recentItems&getQueryTypes&getForwardDestinations&getQuerySources&jsonForceObject"
 }
 
-//PIHoleLoginURL returns the login url
+// PIHoleLoginURL returns the login url
 func (c Config) PIHoleLoginURL() string {
 	return c.hostnameURL() + "/admin/index.php?login"
 }
@@ -191,6 +192,7 @@ func (c EnvConfig) show() {
 	log.Info("------------------------------------")
 	log.Info("-  PI-Hole exporter configuration  -")
 	log.Info("------------------------------------")
+	log.Info("Go version: ", runtime.Version())
 	for i := 0; i < val.NumField(); i++ {
 		valueField := val.Field(i)
 		typeField := val.Type().Field(i)
