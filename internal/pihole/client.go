@@ -201,6 +201,7 @@ func (c *Client) getStatistics() (*Stats, error) {
 		return nil, fmt.Errorf("an error has occured during retrieving PI-Hole statistics: %w", err)
 	}
 
+	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read PI-Hole statistics HTTP response: %w", err)
