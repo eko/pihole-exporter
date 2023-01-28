@@ -108,7 +108,7 @@ $ docker run \
 
 Optionally, you can download and build it from the sources. You have to retrieve the project sources by using one of the following way:
 ```bash
-$ go get -u github.com/eko/pihole-exporter
+$ go install github.com/eko/pihole-exporter@latest
 # or
 $ git clone https://github.com/eko/pihole-exporter.git
 ```
