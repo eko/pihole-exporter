@@ -18,10 +18,20 @@ type Stats struct {
 	ClientsEverSeen     int                `json:"clients_ever_seen"`
 	UniqueClients       int                `json:"unique_clients"`
 	DNSQueriesAllTypes  int                `json:"dns_queries_all_types"`
+	ReplyUnknown        int                `json:"reply_UNKNOWN"`
 	ReplyNoData         int                `json:"reply_NODATA"`
 	ReplyNxDomain       int                `json:"reply_NXDOMAIN"`
 	ReplyCname          int                `json:"reply_CNAME"`
 	ReplyIP             int                `json:"reply_IP"`
+	ReplyDomain         int                `json:"reply_DOMAIN"`
+	ReplyRRName         int                `json:"reply_RRNAME"`
+	ReplyServFail       int                `json:"reply_SERVFAIL"`
+	ReplyRefused        int                `json:"reply_REFUSED"`
+	ReplyNotImp         int                `json:"reply_NOTIMP"`
+	ReplyOther          int                `json:"reply_OTHER"`
+	ReplyDNSSEC         int                `json:"reply_DNSSEC"`
+	ReplyNone           int                `json:"reply_NONE"`
+	ReplyBlob           int                `json:"reply_BLOB"`
 	TopQueries          map[string]int     `json:"top_queries"`
 	TopAds              map[string]int     `json:"top_ads"`
 	TopSources          map[string]int     `json:"top_sources"`
