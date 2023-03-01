@@ -114,10 +114,20 @@ func (c *Client) setMetrics(stats *Stats) {
 	metrics.UniqueClients.WithLabelValues(c.config.PIHoleHostname).Set(float64(stats.UniqueClients))
 	metrics.DNSQueriesAllTypes.WithLabelValues(c.config.PIHoleHostname).Set(float64(stats.DNSQueriesAllTypes))
 
+	metrics.Reply.WithLabelValues(c.config.PIHoleHostname, "unknown").Set(float64(stats.ReplyUnknown))
 	metrics.Reply.WithLabelValues(c.config.PIHoleHostname, "no_data").Set(float64(stats.ReplyNoData))
 	metrics.Reply.WithLabelValues(c.config.PIHoleHostname, "nx_domain").Set(float64(stats.ReplyNxDomain))
 	metrics.Reply.WithLabelValues(c.config.PIHoleHostname, "cname").Set(float64(stats.ReplyCname))
 	metrics.Reply.WithLabelValues(c.config.PIHoleHostname, "ip").Set(float64(stats.ReplyIP))
+	metrics.Reply.WithLabelValues(c.config.PIHoleHostname, "domain").Set(float64(stats.ReplyDomain))
+	metrics.Reply.WithLabelValues(c.config.PIHoleHostname, "rr_name").Set(float64(stats.ReplyRRName))
+	metrics.Reply.WithLabelValues(c.config.PIHoleHostname, "serv_fail").Set(float64(stats.ReplyServFail))
+	metrics.Reply.WithLabelValues(c.config.PIHoleHostname, "refused").Set(float64(stats.ReplyRefused))
+	metrics.Reply.WithLabelValues(c.config.PIHoleHostname, "not_imp").Set(float64(stats.ReplyNotImp))
+	metrics.Reply.WithLabelValues(c.config.PIHoleHostname, "other").Set(float64(stats.ReplyOther))
+	metrics.Reply.WithLabelValues(c.config.PIHoleHostname, "dnssec").Set(float64(stats.ReplyDNSSEC))
+	metrics.Reply.WithLabelValues(c.config.PIHoleHostname, "none").Set(float64(stats.ReplyNone))
+	metrics.Reply.WithLabelValues(c.config.PIHoleHostname, "blob").Set(float64(stats.ReplyBlob))
 
 	var isEnabled int = 0
 	if stats.Status == enabledStatus {
