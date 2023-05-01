@@ -20,10 +20,10 @@ type Server struct {
 
 // NewServer method initializes a new HTTP server instance and associates
 // the different routes that will be used by Prometheus (metrics) or for monitoring (readiness, liveness).
-func NewServer(port uint16, clients []*pihole.Client) *Server {
+func NewServer(addr string, port uint16, clients []*pihole.Client) *Server {
 	mux := http.NewServeMux()
 	httpServer := &http.Server{
-		Addr:    ":" + strconv.Itoa(int(port)),
+		Addr:    addr + ":" + strconv.Itoa(int(port)),
 		Handler: mux,
 	}
 

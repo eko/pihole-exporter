@@ -195,6 +195,9 @@ scrape_configs:
 # WEBPASSWORD / api token defined on the PI-Hole interface at `/etc/pihole/setupVars.conf`
   -pihole_api_token string (optional)
 
+# Address to be used for the exporter
+  -bind_addr string (optional) (default "0.0.0.0")
+
 # Port to be used for the exporter
   -port string (optional) (default "9617")
 ```
