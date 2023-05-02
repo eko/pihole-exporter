@@ -24,6 +24,8 @@ type Config struct {
 	PIHolePort     uint16 `config:"pihole_port"`
 	PIHolePassword string `config:"pihole_password"`
 	PIHoleApiToken string `config:"pihole_api_token"`
+	BindAddr       string `config:"bind_addr"`
+	Port           uint16 `config:"port"`
 }
 
 type EnvConfig struct {
@@ -32,6 +34,7 @@ type EnvConfig struct {
 	PIHolePort     []uint16      `config:"pihole_port"`
 	PIHolePassword []string      `config:"pihole_password"`
 	PIHoleApiToken []string      `config:"pihole_api_token"`
+	BindAddr       string        `config:"bind_addr"`
 	Port           uint16        `config:"port"`
 	Timeout        time.Duration `config:"timeout"`
 }
@@ -43,6 +46,7 @@ func getDefaultEnvConfig() *EnvConfig {
 		PIHolePort:     []uint16{80},
 		PIHolePassword: []string{},
 		PIHoleApiToken: []string{},
+		BindAddr:       "0.0.0.0",
 		Port:           9617,
 		Timeout:        5 * time.Second,
 	}

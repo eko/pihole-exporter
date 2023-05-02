@@ -22,7 +22,7 @@ func main() {
 
 	clients := buildClients(clientConfigs, envConf)
 
-	s := server.NewServer(envConf.Port, clients)
+	s := server.NewServer(envConf.BindAddr, envConf.Port, clients)
 	go func() {
 		s.ListenAndServe()
 		close(serverDead)
