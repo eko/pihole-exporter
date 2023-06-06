@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/heetch/confita v0.10.0
 	github.com/prometheus/client_golang v1.15.1
-	github.com/sirupsen/logrus v1.9.2
+	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.8.4
 	github.com/xonvanetta/shutdown v0.0.3
 	golang.org/x/net v0.10.0
