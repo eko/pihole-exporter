@@ -1,6 +1,6 @@
 # Contributing
 
-PI-Hole exporter is an open source project, completely opened to be a community-driven project.
+Pi-hole exporter is an open source project, completely opened to be a community-driven project.
 
 If you'd like to contribute, you are free to do so.
 

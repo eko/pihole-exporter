@@ -194,7 +194,7 @@ func (c Config) PIHoleLoginURL() string {
 func (c EnvConfig) show() {
 	val := reflect.ValueOf(&c).Elem()
 	log.Info("------------------------------------")
-	log.Info("-  PI-Hole exporter configuration  -")
+	log.Info("-  Pi-hole exporter configuration  -")
 	log.Info("------------------------------------")
 	log.Info("Go version: ", runtime.Version())
 	for i := 0; i < val.NumField(); i++ {
@@ -213,6 +213,6 @@ func (c EnvConfig) show() {
 
 func showAuthenticationMethod(name string, length int) {
 	if length > 0 {
-		log.Info(fmt.Sprintf("Pi-Hole Authentication Method : %s", name))
+		log.Info(fmt.Sprintf("Pi-hole Authentication Method : %s", name))
 	}
 }

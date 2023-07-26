@@ -43,7 +43,7 @@ func (c *ClientChannel) String() string {
 	}
 }
 
-// Client struct is a PI-Hole client to request an instance of a PI-Hole ad blocker.
+// Client struct is a Pi-hole client to request an instance of a Pi-hole ad blocker.
 type Client struct {
 	httpClient http.Client
 	interval   time.Duration
@@ -51,7 +51,7 @@ type Client struct {
 	Status     chan *ClientChannel
 }
 
-// NewClient method initializes a new PI-Hole client.
+// NewClient method initializes a new Pi-hole client.
 func NewClient(config *config.Config, envConfig *config.EnvConfig) *Client {
 	err := config.Validate()
 	if err != nil {
@@ -135,10 +135,10 @@ func (c *Client) setMetrics(stats *Stats) {
 	}
 	metrics.Status.WithLabelValues(c.config.PIHoleHostname).Set(float64(isEnabled))
 
-	// Pi-Hole returns a subset of stats when Auth is missing or incorrect.
+	// Pi-hole returns a subset of stats when Auth is missing or incorrect.
 	// This provides a warning to users that metrics are not complete.
 	if len(stats.TopQueries) == 0 {
-		log.Warnf("Invalid Authentication - Some metrics may be missing. Please confirm your PI-Hole API token / Password for %s", c.config.PIHoleHostname)
+		log.Warnf("Invalid Authentication - Some metrics may be missing. Please confirm your Pi-hole API token / Password for %s", c.config.PIHoleHostname)
 	}
 
 	for domain, value := range stats.TopQueries {
@@ -175,7 +175,7 @@ func (c *Client) getPHPSessionID() (sessionID string) {
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		log.Errorf("An error has occured during login to PI-Hole: %v", err)
+		log.Errorf("An error has occured during login to Pi-hole: %v", err)
 	}
 
 	for _, cookie := range resp.Cookies() {
@@ -208,18 +208,18 @@ func (c *Client) getStatistics() (*Stats, error) {
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("an error has occured during retrieving PI-Hole statistics: %w", err)
+		return nil, fmt.Errorf("an error has occured during retrieving Pi-hole statistics: %w", err)
 	}
 
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("unable to read PI-Hole statistics HTTP response: %w", err)
+		return nil, fmt.Errorf("unable to read Pi-hole statistics HTTP response: %w", err)
 	}
 
 	err = json.Unmarshal(body, stats)
 	if err != nil {
-		return nil, fmt.Errorf("unable to unmarshal PI-Hole statistics to statistics struct model: %w", err)
+		return nil, fmt.Errorf("unable to unmarshal Pi-hole statistics to statistics struct model: %w", err)
 	}
 
 	return stats, nil

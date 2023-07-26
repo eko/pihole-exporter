@@ -67,7 +67,7 @@
       }
     ]
   },
-  "description": "This is a PI-Hole dashboard when using the https://github.com/eko/pihole-exporter Prometheus exporter",
+  "description": "This is a Pi-hole dashboard when using the https://github.com/eko/pihole-exporter Prometheus exporter",
   "editable": true,
   "gnetId": 10176,
   "graphTooltip": 0,
@@ -1522,7 +1522,7 @@
     ]
   },
   "timezone": "",
-  "title": "PI-Hole Exporter",
-  "uid": "PI-Hole-Exporter",
+  "title": "Pi-hole Exporter",
+  "uid": "Pi-hole-Exporter",
   "version": 31
 }
