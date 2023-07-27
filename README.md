@@ -1,10 +1,10 @@
-# PI-Hole Prometheus Exporter
+# Pi-hole Prometheus Exporter
 
 ![Build/Push (master)](https://github.com/eko/pihole-exporter/workflows/Build/Push%20(master)/badge.svg)
 [![GoDoc](https://godoc.org/github.com/eko/pihole-exporter?status.png)](https://godoc.org/github.com/eko/pihole-exporter)
 [![GoReportCard](https://goreportcard.com/badge/github.com/eko/pihole-exporter)](https://goreportcard.com/report/github.com/eko/pihole-exporter)
 
-This is a Prometheus exporter for [PI-Hole](https://pi-hole.net/)'s Raspberry PI ad blocker.
+This is a Prometheus exporter for [Pi-hole](https://pi-hole.net/)'s Raspberry PI ad blocker.
 
 ![Grafana dashboard](https://raw.githubusercontent.com/eko/pihole-exporter/master/dashboard.jpg)
 
@@ -143,7 +143,7 @@ $ ./pihole_exporter -pihole_hostname 192.168.1.10 -pihole_api_token $API_TOKEN
 
 ```bash
 2019/05/09 20:19:52 ------------------------------------
-2019/05/09 20:19:52 -  PI-Hole exporter configuration  -
+2019/05/09 20:19:52 -  Pi-hole exporter configuration  -
 2019/05/09 20:19:52 ------------------------------------
 2019/05/09 20:19:52 PIHoleHostname : 192.168.1.10
 2019/05/09 20:19:52 PIHolePassword : azerty
@@ -183,16 +183,16 @@ scrape_configs:
 
 ## Available CLI options
 ```bash
-# Hostname of the host(s) where PI-Hole is installed
+# Hostname of the host(s) where Pi-hole is installed
   -pihole_hostname string (optional) (default "127.0.0.1")
 
-# Password defined on the PI-Hole interface
+# Password defined on the Pi-hole interface
   -pihole_password string (optional)
 
-# Timeout to connect and retrieve data from a Pi-Hole instance
+# Timeout to connect and retrieve data from a Pi-hole instance
   -timeout duration (optional) (default 5s)
 
-# WEBPASSWORD / api token defined on the PI-Hole interface at `/etc/pihole/setupVars.conf`
+# WEBPASSWORD / api token defined on the Pi-hole interface at `/etc/pihole/setupVars.conf`
   -pihole_api_token string (optional)
 
 # Address to be used for the exporter
@@ -217,12 +217,12 @@ scrape_configs:
 | pihole_unique_clients        | This represent the number of unique clients seen                                          |
 | pihole_dns_queries_all_types | This represent the number of DNS queries made for all types                               |
 | pihole_reply                 | This represent the number of replies made for all types                                   |
-| pihole_top_queries           | This represent the number of top queries made by PI-Hole by domain                        |
-| pihole_top_ads               | This represent the number of top ads made by PI-Hole by domain                            |
-| pihole_top_sources           | This represent the number of top sources requests made by PI-Hole by source host          |
-| pihole_forward_destinations  | This represent the number of forward destinations requests made by PI-Hole by destination |
-| pihole_querytypes            | This represent the number of queries made by PI-Hole by type                              |
-| pihole_status                | This represent if PI-Hole is enabled                                                      |
+| pihole_top_queries           | This represent the number of top queries made by Pi-hole by domain                        |
+| pihole_top_ads               | This represent the number of top ads made by Pi-hole by domain                            |
+| pihole_top_sources           | This represent the number of top sources requests made by Pi-hole by source host          |
+| pihole_forward_destinations  | This represent the number of forward destinations requests made by Pi-hole by destination |
+| pihole_querytypes            | This represent the number of queries made by Pi-hole by type                              |
+| pihole_status                | This represent if Pi-hole is enabled                                                      |
 
 
 ## Pihole-Exporter Helm Chart

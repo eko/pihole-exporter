@@ -6,7 +6,7 @@ const (
 	enabledStatus = "enabled"
 )
 
-// Stats struct is the PI-Hole statistics JSON API corresponding model.
+// Stats struct is the Pi-hole statistics JSON API corresponding model.
 type Stats struct {
 	DomainsBeingBlocked int                `json:"domains_being_blocked"`
 	DNSQueriesToday     int                `json:"dns_queries_today"`

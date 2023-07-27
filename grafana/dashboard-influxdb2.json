@@ -76,7 +76,7 @@
       }
     ]
   },
-  "description": "This is a PI-Hole dashboard when using the https://github.com/eko/pihole-exporter Prometheus exporter with an Influxdb2 Datasource",
+  "description": "This is a Pi-hole dashboard when using the https://github.com/eko/pihole-exporter Prometheus exporter with an Influxdb2 Datasource",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "gnetId": 17094,
@@ -108,7 +108,7 @@
           "refId": "A"
         }
       ],
-      "title": "🍓PI-Hole",
+      "title": "🥧🕳️ Pi-hole",
       "type": "row"
     },
     {
@@ -1777,7 +1777,7 @@
     ]
   },
   "timezone": "",
-  "title": "PI-Hole Exporter Influxdb 2 (Flux)",
+  "title": "Pi-hole Exporter Influxdb 2 (Flux)",
   "uid": "KILVhlozd",
   "version": 1,
   "weekStart": ""
