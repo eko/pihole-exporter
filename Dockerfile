@@ -2,7 +2,7 @@ ARG IMAGE=scratch
 ARG OS=linux
 ARG ARCH=amd64
 
-FROM golang:1.21.3-alpine3.17 as builder
+FROM golang:1.21.4-alpine3.17 as builder
 
 WORKDIR /go/src/github.com/eko/pihole-exporter
 COPY . .
