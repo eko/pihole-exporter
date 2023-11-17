@@ -162,12 +162,12 @@ func (c *Client) setMetrics(stats *Stats) {
 	}
 }
 
-func (c *Client) getPHPSessionID() (sessionID string) {
+func (c *Client) getPHPSessionID() (string, error) {
 	values := url.Values{"pw": []string{c.config.PIHolePassword}}
 
 	req, err := http.NewRequest("POST", c.config.PIHoleLoginURL(), strings.NewReader(values.Encode()))
 	if err != nil {
-		log.Fatal("An error has occured when creating HTTP statistics request", err)
+		return "", fmt.Errorf("creating HTTP statistics request: %w", err)
 	}
 
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
@@ -175,17 +175,16 @@ func (c *Client) getPHPSessionID() (sessionID string) {
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		log.Errorf("An error has occured during login to Pi-hole: %v", err)
+		return "", fmt.Errorf("loging in to Pi-hole: %w", err)
 	}
 
 	for _, cookie := range resp.Cookies() {
 		if cookie.Name == "PHPSESSID" {
-			sessionID = cookie.Value
-			break
+			return cookie.Value, nil
 		}
 	}
 
-	return
+	return "", fmt.Errorf("no PHPSESSID cookie found")
 }
 
 func (c *Client) getStatistics() (*Stats, error) {
@@ -203,7 +202,10 @@ func (c *Client) getStatistics() (*Stats, error) {
 	}
 
 	if c.isUsingPassword() {
-		c.authenticateRequest(req)
+		err := c.authenticateRequest(req)
+		if err != nil {
+			return nil, fmt.Errorf("an error has occurred authenticating the request: %w", err)
+		}
 	}
 
 	resp, err := c.httpClient.Do(req)
@@ -233,7 +235,12 @@ func (c *Client) isUsingApiToken() bool {
 	return len(c.config.PIHoleApiToken) > 0
 }
 
-func (c *Client) authenticateRequest(req *http.Request) {
-	cookie := http.Cookie{Name: "PHPSESSID", Value: c.getPHPSessionID()}
+func (c *Client) authenticateRequest(req *http.Request) error {
+	sessionID, err := c.getPHPSessionID()
+	if err != nil {
+		return err
+	}
+	cookie := http.Cookie{Name: "PHPSESSID", Value: sessionID}
 	req.AddCookie(&cookie)
+	return nil
 }
