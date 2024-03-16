@@ -1,19 +1,19 @@
-version: "3.6"
 services:
-  pihole_exporter:
-    build:
-      context: ./
-      args:
-        ARCH: CHANGE_ME
-      dockerfile: Dockerfile
-    image: ekofr/pihole-exporter:arm64
-    container_name: pihole_exporter
-    expose:
-      - 9617
-    environment:
-      PIHOLE_HOSTNAME: CHANGE_ME 
-      PIHOLE_PORT: CHANGE_ME
-      PIHOLE_PASSWORD: CHANGE_ME
-      INTERVAL: 30s
-      PORT: 9617
+  pihole-exporter:
+    container_name: pihole-exporter
+    image: ekofr/pihole-exporter:latest
+    env_file:
+      - pihole-exporter.env
+    ports:
+      - "9617:9617"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5k"
+        max-file: "5"
+    healthcheck:
+      test: ["CMD", "wget", "--tries=1", "--spider", "http://localhost:9617/metrics"]
+      interval: 300s
+      retries: 5
+      timeout: 10s
     restart: always
