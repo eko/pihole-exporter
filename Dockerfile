@@ -1,8 +1,10 @@
 FROM golang:alpine as builder
 
-WORKDIR /go/src/github.com/eko/pihole-exporter
-COPY . .
+RUN mkdir /app
 
+COPY . /app
+
+WORKDIR /app
 RUN go mod tidy && go mod download && go mod vendor && go build -o pihole-exporter
 
 FROM alpine:latest
@@ -10,6 +12,6 @@ FROM alpine:latest
 LABEL name="pihole-exporter"
 
 WORKDIR /root/
-COPY --from=builder /go/src/github.com/eko/pihole-exporter/binary pihole-exporter
+COPY --from=builder /app/pihole-exporter pihole-exporter
 
 CMD ["./pihole-exporter"]
