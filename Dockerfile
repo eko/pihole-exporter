@@ -1,18 +1,11 @@
-ARG IMAGE=scratch
-ARG OS=linux
-ARG ARCH=amd64
-
-FROM golang:1.21.5-alpine3.17 as builder
+FROM golang:alpine as builder
 
 WORKDIR /go/src/github.com/eko/pihole-exporter
 COPY . .
 
-RUN apk --no-cache add git alpine-sdk
+RUN go mod tidy && go mod download && go mod vendor && go build -o netatmo-exporter
 
-RUN GO111MODULE=on go mod vendor
-RUN CGO_ENABLED=0 GOOS=$OS GOARCH=$ARCH go build -ldflags '-s -w' -o binary ./
-
-FROM $IMAGE
+FROM alpine:latest
 
 LABEL name="pihole-exporter"
 
