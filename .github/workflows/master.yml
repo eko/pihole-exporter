@@ -7,7 +7,7 @@ on:
     - cron: '0 22 1 * *'
 
 env:
-  IMAGENAME: netatmo-energy-exporter
+  IMAGENAME: pihole-exporter
   GHCR: ghcr.io
   DOCKER: docker.io
 
@@ -38,14 +38,14 @@ jobs:
           else
             docker build . --file Dockerfile
           fi
-          
+
   golangci-lint:
-    name: runner / golangci-lint
+    name: golangci-lint
     runs-on: ubuntu-latest
     steps:
       - name: Check out code into the Go module directory
         uses: actions/checkout@v4
-      - name: golangci-lint
+      - name: Perform Go lint
         uses: reviewdog/action-golangci-lint@v1
         with:
           fail_on_error: true
