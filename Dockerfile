@@ -3,7 +3,7 @@ FROM golang:alpine as builder
 WORKDIR /go/src/github.com/eko/pihole-exporter
 COPY . .
 
-RUN go mod tidy && go mod download && go mod vendor && go build -o netatmo-exporter
+RUN go mod tidy && go mod download && go mod vendor && go build -o pihole-exporter
 
 FROM alpine:latest
 
