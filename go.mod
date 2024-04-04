@@ -8,7 +8,7 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.9.0
 	github.com/xonvanetta/shutdown v0.0.3
-	golang.org/x/net v0.22.0
+	golang.org/x/net v0.23.0
 )
 
 require (
