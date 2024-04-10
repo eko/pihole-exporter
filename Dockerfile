@@ -1,22 +1,17 @@
-ARG IMAGE=scratch
-ARG OS=linux
-ARG ARCH=amd64
+FROM golang:alpine as builder
 
-FROM golang:1.21.5-alpine3.17 as builder
+RUN mkdir /app
 
-WORKDIR /go/src/github.com/eko/pihole-exporter
-COPY . .
+COPY . /app
 
-RUN apk --no-cache add git alpine-sdk
+WORKDIR /app
+RUN go mod tidy && go mod download && go mod vendor && go build -o pihole-exporter
 
-RUN GO111MODULE=on go mod vendor
-RUN CGO_ENABLED=0 GOOS=$OS GOARCH=$ARCH go build -ldflags '-s -w' -o binary ./
-
-FROM $IMAGE
+FROM alpine:latest
 
 LABEL name="pihole-exporter"
 
 WORKDIR /root/
-COPY --from=builder /go/src/github.com/eko/pihole-exporter/binary pihole-exporter
+COPY --from=builder /app/pihole-exporter pihole-exporter
 
 CMD ["./pihole-exporter"]
