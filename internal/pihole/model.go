@@ -38,6 +38,7 @@ type Stats struct {
 	ForwardDestinations map[string]float64 `json:"forward_destinations"`
 	QueryTypes          map[string]float64 `json:"querytypes"`
 	Status              string             `json:"status"`
+	DomainsOverTime     map[int]int        `json:"domains_over_time"`
 }
 
 // ToString method returns a string of the current statistics struct.

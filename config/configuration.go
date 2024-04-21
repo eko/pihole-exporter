@@ -183,7 +183,7 @@ func (c Config) hostnameURL() string {
 
 // PIHoleStatsURL returns the stats url
 func (c Config) PIHoleStatsURL() string {
-	return c.hostnameURL() + "/admin/api.php?summaryRaw&overTimeData&topItems&recentItems&getQueryTypes&getForwardDestinations&getQuerySources&jsonForceObject"
+	return c.hostnameURL() + "/admin/api.php?summaryRaw&overTimeData&topItems&recentItems&getQueryTypes&getForwardDestinations&getQuerySources&overTimeData10mins&jsonForceObject"
 }
 
 // PIHoleLoginURL returns the login url

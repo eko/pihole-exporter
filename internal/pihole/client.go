@@ -160,6 +160,20 @@ func (c *Client) setMetrics(stats *Stats) {
 	for queryType, value := range stats.QueryTypes {
 		metrics.QueryTypes.WithLabelValues(c.config.PIHoleHostname, queryType).Set(value)
 	}
+
+  // Pi-hole returns a map of unix epoch time with the number of queries in slots of 10 minutes.
+  // The last epoch is the current in-progress time slot, with queries still being added.
+  // We return the second latest epoch, which is definitive.
+  var lastEpoch, secondLastEpoch int
+  for timestamp := range stats.DomainsOverTime {
+      if timestamp > lastEpoch {
+          secondLastEpoch = lastEpoch
+          lastEpoch = timestamp
+      } else if timestamp > secondLastEpoch && timestamp != lastEpoch {
+          secondLastEpoch = timestamp
+      }
+  }
+	metrics.QueriesLast10min.WithLabelValues(c.config.PIHoleHostname).Set(float64(stats.DomainsOverTime[secondLastEpoch]))
 }
 
 func (c *Client) getPHPSessionID() (string, error) {
