@@ -175,6 +175,24 @@ var (
 		},
 		[]string{"hostname"},
 	)
+
+	DNSQueriesLast10min = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name:      "dns_queries_last_10min",
+			Namespace: "pihole",
+			Help:      "Number of DNS queries in the last full slot of 10 minutes",
+		},
+		[]string{"hostname", "window"},
+	)
+
+	AdsBlockedLast10min = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name:      "ads_blocked_last_10min",
+			Namespace: "pihole",
+			Help:      "Number of Ads blocked in the last full slot of 10 minutes",
+		},
+		[]string{"hostname"},
+	)
 )
 
 // Init initializes all Prometheus metrics made available by Pi-hole exporter.
@@ -196,6 +214,8 @@ func Init() {
 	initMetric("forward_destinations", ForwardDestinations)
 	initMetric("querytypes", QueryTypes)
 	initMetric("status", Status)
+	initMetric("dns_queries_last_10min", DNSQueriesLast10min)
+	initMetric("ads_blocked_last_10min", AdsBlockedLast10min)
 }
 
 func initMetric(name string, metric *prometheus.GaugeVec) {

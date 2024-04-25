@@ -160,6 +160,20 @@ func (c *Client) setMetrics(stats *Stats) {
 	for queryType, value := range stats.QueryTypes {
 		metrics.QueryTypes.WithLabelValues(c.config.PIHoleHostname, queryType).Set(value)
 	}
+
+	var lastEpoch, secondLastEpoch int
+	for timestamp := range stats.DomainsOverTime {
+		secondLastEpoch = lastEpoch
+		lastEpoch = timestamp
+		metrics.DNSQueriesLast10min.WithLabelValues(c.config.PIHoleHostname).Set(float64(stats.DomainsOverTime[secondLastEpoch]))
+	}
+
+	for timestamp := range stats.AdsOverTime {
+		secondLastEpoch = lastEpoch
+		lastEpoch = timestamp
+		metrics.AdsBlockedLast10min.WithLabelValues(c.config.PIHoleHostname).Set(float64(stats.AdsOverTime[secondLastEpoch]))
+	}
+
 }
 
 func (c *Client) getPHPSessionID() (string, error) {
