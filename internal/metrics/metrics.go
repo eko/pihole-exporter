@@ -175,6 +175,16 @@ var (
 		},
 		[]string{"hostname"},
 	)
+
+	// QueriesLast10min - Number of queries in the last full slot of 10 minutes
+	QueriesLast10min = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name:      "queries_last_10min",
+			Namespace: "pihole",
+			Help:      "Number of queries in the last full slot of 10 minutes",
+		},
+		[]string{"hostname"},
+	)
 )
 
 // Init initializes all Prometheus metrics made available by Pi-hole exporter.
@@ -196,6 +206,7 @@ func Init() {
 	initMetric("forward_destinations", ForwardDestinations)
 	initMetric("querytypes", QueryTypes)
 	initMetric("status", Status)
+	initMetric("queries_last_10min", QueriesLast10min)
 }
 
 func initMetric(name string, metric *prometheus.GaugeVec) {
