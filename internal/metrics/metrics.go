@@ -185,6 +185,16 @@ var (
 		},
 		[]string{"hostname"},
 	)
+
+	// AdsLast10min - Number of ads in the last full slot of 10 minutes
+	AdsLast10min = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name:      "ads_last_10min",
+			Namespace: "pihole",
+			Help:      "Number of ads in the last full slot of 10 minutes",
+		},
+		[]string{"hostname"},
+	)
 )
 
 // Init initializes all Prometheus metrics made available by Pi-hole exporter.
@@ -207,6 +217,7 @@ func Init() {
 	initMetric("querytypes", QueryTypes)
 	initMetric("status", Status)
 	initMetric("queries_last_10min", QueriesLast10min)
+	initMetric("ads_last_10min", AdsLast10min)
 }
 
 func initMetric(name string, metric *prometheus.GaugeVec) {

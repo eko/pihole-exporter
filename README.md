@@ -167,6 +167,8 @@ $ ./pihole_exporter -pihole_hostname 192.168.1.10 -pihole_api_token $API_TOKEN
 2019/05/09 20:19:52 New Prometheus metric registered: forward_destinations
 2019/05/09 20:19:52 New Prometheus metric registered: querytypes
 2019/05/09 20:19:52 New Prometheus metric registered: status
+2019/05/09 20:19:52 New Prometheus metric registered: queries_last_10min
+2019/05/09 20:19:52 New Prometheus metric registered: ads_last_10min
 2019/05/09 20:19:52 Starting HTTP server
 2019/05/09 20:19:54 New tick of statistics: 648 ads blocked / 66796 total DNS querie
 ...
@@ -224,6 +226,7 @@ scrape_configs:
 | pihole_querytypes            | This represent the number of queries made by Pi-hole by type                              |
 | pihole_status                | This represent if Pi-hole is enabled                                                      |
 | queries_last_10min           | This represent the number of queries in the last full slot of 10 minutes                  |
+| ads_last_10min               | This represent the number of ads in the last full slot of 10 minutes                      |
 
 
 ## Pihole-Exporter Helm Chart

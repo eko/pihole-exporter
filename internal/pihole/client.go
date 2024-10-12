@@ -102,6 +102,22 @@ func (c *Client) GetHostname() string {
 	return c.config.PIHoleHostname
 }
 
+// Pi-hole returns a map of unix epoch time with the number of stats in slots of 10 minutes.
+// The last epoch is the current in-progress time slot, with stats still being added.
+// We return the second latest epoch stats, which is definitive.
+func latestEpochStats(statsOverTime map[int]int) float64 {
+    var lastEpoch, secondLastEpoch int
+    for timestamp := range statsOverTime {
+        if timestamp > lastEpoch {
+            secondLastEpoch = lastEpoch
+            lastEpoch = timestamp
+        } else if timestamp > secondLastEpoch && timestamp != lastEpoch {
+            secondLastEpoch = timestamp
+        }
+    }
+    return float64(statsOverTime[secondLastEpoch])
+}
+
 func (c *Client) setMetrics(stats *Stats) {
 	metrics.DomainsBlocked.WithLabelValues(c.config.PIHoleHostname).Set(float64(stats.DomainsBeingBlocked))
 	metrics.DNSQueriesToday.WithLabelValues(c.config.PIHoleHostname).Set(float64(stats.DNSQueriesToday))
@@ -161,19 +177,8 @@ func (c *Client) setMetrics(stats *Stats) {
 		metrics.QueryTypes.WithLabelValues(c.config.PIHoleHostname, queryType).Set(value)
 	}
 
-  // Pi-hole returns a map of unix epoch time with the number of queries in slots of 10 minutes.
-  // The last epoch is the current in-progress time slot, with queries still being added.
-  // We return the second latest epoch, which is definitive.
-  var lastEpoch, secondLastEpoch int
-  for timestamp := range stats.DomainsOverTime {
-      if timestamp > lastEpoch {
-          secondLastEpoch = lastEpoch
-          lastEpoch = timestamp
-      } else if timestamp > secondLastEpoch && timestamp != lastEpoch {
-          secondLastEpoch = timestamp
-      }
-  }
-	metrics.QueriesLast10min.WithLabelValues(c.config.PIHoleHostname).Set(float64(stats.DomainsOverTime[secondLastEpoch]))
+	metrics.QueriesLast10min.WithLabelValues(c.config.PIHoleHostname).Set(latestEpochStats(stats.DomainsOverTime))
+	metrics.AdsLast10min.WithLabelValues(c.config.PIHoleHostname).Set(latestEpochStats(stats.AdsOverTime))
 }
 
 func (c *Client) getPHPSessionID() (string, error) {
