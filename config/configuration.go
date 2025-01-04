@@ -22,6 +22,7 @@ type Config struct {
 	PIHoleProtocol string `config:"pihole_protocol"`
 	PIHoleHostname string `config:"pihole_hostname"`
 	PIHolePort     uint16 `config:"pihole_port"`
+	PIHoleContext  string `config:"pihole_context"`
 	PIHolePassword string `config:"pihole_password"`
 	PIHoleApiToken string `config:"pihole_api_token"`
 	BindAddr       string `config:"bind_addr"`
@@ -32,6 +33,7 @@ type EnvConfig struct {
 	PIHoleProtocol []string      `config:"pihole_protocol"`
 	PIHoleHostname []string      `config:"pihole_hostname"`
 	PIHolePort     []uint16      `config:"pihole_port"`
+	PIHoleContext  []string      `config:"pihole_context"`
 	PIHolePassword []string      `config:"pihole_password"`
 	PIHoleApiToken []string      `config:"pihole_api_token"`
 	BindAddr       string        `config:"bind_addr"`
@@ -44,6 +46,7 @@ func getDefaultEnvConfig() *EnvConfig {
 		PIHoleProtocol: []string{"http"},
 		PIHoleHostname: []string{"127.0.0.1"},
 		PIHolePort:     []uint16{80},
+		PIHoleContext:  []string{""},
 		PIHolePassword: []string{},
 		PIHoleApiToken: []string{},
 		BindAddr:       "0.0.0.0",
@@ -173,22 +176,25 @@ func removeEmptyString(source []string) []string {
 	return result
 }
 
-func (c Config) hostnameURL() string {
+func (c Config) piHoleURL() string {
 	s := fmt.Sprintf("%s://%s", c.PIHoleProtocol, c.PIHoleHostname)
 	if c.PIHolePort != 0 {
 		s += fmt.Sprintf(":%d", c.PIHolePort)
+	}
+	if c.PIHoleContext != "" {
+		s += fmt.Sprintf("/%s", c.PIHoleContext)
 	}
 	return s
 }
 
 // PIHoleStatsURL returns the stats url
 func (c Config) PIHoleStatsURL() string {
-	return c.hostnameURL() + "/admin/api.php?summaryRaw&overTimeData&topItems&recentItems&getQueryTypes&getForwardDestinations&getQuerySources&overTimeData10mins&jsonForceObject"
+	return c.piHoleURL() + "/admin/api.php?summaryRaw&overTimeData&topItems&recentItems&getQueryTypes&getForwardDestinations&getQuerySources&overTimeData10mins&jsonForceObject"
 }
 
 // PIHoleLoginURL returns the login url
 func (c Config) PIHoleLoginURL() string {
-	return c.hostnameURL() + "/admin/index.php?login"
+	return c.piHoleURL() + "/admin/index.php?login"
 }
 
 func (c EnvConfig) show() {
