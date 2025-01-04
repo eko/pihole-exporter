@@ -123,12 +123,10 @@ func (c EnvConfig) Split() ([]Config, error) {
 			return nil, errors.New("Wrong number of ports. Port can be empty to use default, one value to use for all hosts, or match the number of hosts")
 		}
 
-		if len(c.PIHoleContext) == 1 {
-			config.PIHoleContext = c.PIHoleContext[0]
-		} else if len(c.PIHoleContext) == hostsCount {
-			config.PIHoleContext = c.PIHoleContext[i]
-		} else if len(c.PIHoleContext) != 0 {
-			return nil, errors.New("Wrong number of contexts. Context can be empty to use default, one value to use for all hosts, or match the number of hosts")
+		if hasData, data, isValid := extractStringConfig(c.PIHoleContext, i, hostsCount); hasData {
+			config.PIHoleContext = data
+		} else if !isValid {
+			return nil, errors.New("Wrong number of PIHoleContext. PIHoleContext can be empty to use default, one value to use for all hosts, or match the number of hosts")
 		}
 
 		if hasData, data, isValid := extractStringConfig(c.PIHoleProtocol, i, hostsCount); hasData {
