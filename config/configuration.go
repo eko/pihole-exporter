@@ -128,7 +128,7 @@ func (c EnvConfig) Split() ([]Config, error) {
 		} else if len(c.PIHoleContext) == hostsCount {
 			config.PIHoleContext = c.PIHoleContext[i]
 		} else if len(c.PIHoleContext) != 0 {
-			return nil, errors.New("Wrong number of context. Context can be empty to use default, one value to use for all hosts, or match the number of hosts")
+			return nil, errors.New("Wrong number of contexts. Context can be empty to use default, one value to use for all hosts, or match the number of hosts")
 		}
 
 		if hasData, data, isValid := extractStringConfig(c.PIHoleProtocol, i, hostsCount); hasData {
