@@ -10,6 +10,7 @@ import (
 const (
 	PIHOLE_HOSTNAME  = "PIHOLE_HOSTNAME"
 	PIHOLE_PORT      = "PIHOLE_PORT"
+	PIHOLE_CONTEXT   = "PIHOLE_CONTEXT"
 	PIHOLE_API_TOKEN = "PIHOLE_API_TOKEN"
 	PIHOLE_PROTOCOL  = "PIHOLE_PROTOCOL"
 )
@@ -32,6 +33,7 @@ func TestSplitDefault(t *testing.T) {
 	clientConfig := clientConfigs[0]
 	assert.Equal("127.0.0.1", clientConfig.PIHoleHostname)
 	assert.Equal("http", clientConfig.PIHoleProtocol)
+	assert.Equal("", clientConfig.PIHoleContext)
 	assert.Equal(uint16(80), clientConfig.PIHolePort)
 	assert.Empty(clientConfig.PIHoleApiToken)
 	assert.Empty(clientConfig.PIHolePassword)
@@ -43,6 +45,7 @@ func TestSplitMultipleHostWithSameConfig(t *testing.T) {
 	env := getDefaultEnvConfig()
 	env.PIHoleHostname = []string{"127.0.0.1", "127.0.0.2", "127.0.0.3"}
 	env.PIHoleApiToken = []string{"api-token"}
+	env.PIHoleContext = []string{"foo"}
 	env.PIHolePort = []uint16{8080}
 
 	clientConfigs, err := env.Split()
@@ -52,21 +55,25 @@ func TestSplitMultipleHostWithSameConfig(t *testing.T) {
 	testCases := []struct {
 		Host     string
 		Port     uint16
+		Context  string
 		Protocol string
 	}{
 		{
 			Host:     "127.0.0.1",
 			Port:     8080,
+			Context:  "foo",
 			Protocol: "http",
 		},
 		{
 			Host:     "127.0.0.2",
 			Port:     8080,
+			Context:  "foo",
 			Protocol: "http",
 		},
 		{
 			Host:     "127.0.0.3",
 			Port:     8080,
+			Context:  "foo",
 			Protocol: "http",
 		},
 	}
@@ -90,6 +97,7 @@ func TestSplitMultipleHostWithMultipleConfigs(t *testing.T) {
 	env := getDefaultEnvConfig()
 	env.PIHoleHostname = []string{"127.0.0.1", "127.0.0.2", "127.0.0.3"}
 	env.PIHoleApiToken = []string{"api-token1", "", "api-token3"}
+	env.PIHoleContext = []string{"", "foo", "bar"}
 	env.PIHolePassword = []string{"", "password2", ""}
 	env.PIHolePort = []uint16{8081, 8082, 8083}
 
@@ -100,6 +108,7 @@ func TestSplitMultipleHostWithMultipleConfigs(t *testing.T) {
 	testCases := []struct {
 		Host     string
 		Port     uint16
+		Context  string
 		Protocol string
 		ApiToken string
 		Password string
@@ -107,6 +116,7 @@ func TestSplitMultipleHostWithMultipleConfigs(t *testing.T) {
 		{
 			Host:     "127.0.0.1",
 			Port:     8081,
+			Context:  "",
 			Protocol: "http",
 			ApiToken: "api-token1",
 			Password: "",
@@ -114,6 +124,7 @@ func TestSplitMultipleHostWithMultipleConfigs(t *testing.T) {
 		{
 			Host:     "127.0.0.2",
 			Port:     8082,
+			Context:  "foo",
 			Protocol: "http",
 			ApiToken: "",
 			Password: "password2",
@@ -121,6 +132,7 @@ func TestSplitMultipleHostWithMultipleConfigs(t *testing.T) {
 		{
 			Host:     "127.0.0.3",
 			Port:     8083,
+			Context:  "bar",
 			Protocol: "http",
 			ApiToken: "api-token3",
 			Password: "",
@@ -133,6 +145,7 @@ func TestSplitMultipleHostWithMultipleConfigs(t *testing.T) {
 
 			assert.Equal(tc.Host, clientConfig.PIHoleHostname)
 			assert.Equal(tc.Protocol, clientConfig.PIHoleProtocol)
+			assert.Equal(tc.Context, clientConfig.PIHoleContext)
 			assert.Equal(tc.Port, clientConfig.PIHolePort)
 			assert.Equal(tc.ApiToken, clientConfig.PIHoleApiToken)
 			assert.Equal(tc.Password, clientConfig.PIHolePassword)
