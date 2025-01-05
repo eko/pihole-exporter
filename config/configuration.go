@@ -19,39 +19,39 @@ import (
 
 // Config is the exporter CLI configuration.
 type Config struct {
-	PIHoleProtocol string `config:"pihole_protocol"`
-	PIHoleHostname string `config:"pihole_hostname"`
-	PIHolePort     uint16 `config:"pihole_port"`
-	PIHoleContext  string `config:"pihole_context"`
-	PIHolePassword string `config:"pihole_password"`
-	PIHoleApiToken string `config:"pihole_api_token"`
-	BindAddr       string `config:"bind_addr"`
-	Port           uint16 `config:"port"`
+	PIHoleProtocol     string `config:"pihole_protocol"`
+	PIHoleHostname     string `config:"pihole_hostname"`
+	PIHolePort         uint16 `config:"pihole_port"`
+	PIHoleAdminContext string `config:"pihole_admin_context"`
+	PIHolePassword     string `config:"pihole_password"`
+	PIHoleApiToken     string `config:"pihole_api_token"`
+	BindAddr           string `config:"bind_addr"`
+	Port               uint16 `config:"port"`
 }
 
 type EnvConfig struct {
-	PIHoleProtocol []string      `config:"pihole_protocol"`
-	PIHoleHostname []string      `config:"pihole_hostname"`
-	PIHolePort     []uint16      `config:"pihole_port"`
-	PIHoleContext  []string      `config:"pihole_context"`
-	PIHolePassword []string      `config:"pihole_password"`
-	PIHoleApiToken []string      `config:"pihole_api_token"`
-	BindAddr       string        `config:"bind_addr"`
-	Port           uint16        `config:"port"`
-	Timeout        time.Duration `config:"timeout"`
+	PIHoleProtocol     []string      `config:"pihole_protocol"`
+	PIHoleHostname     []string      `config:"pihole_hostname"`
+	PIHolePort         []uint16      `config:"pihole_port"`
+	PIHoleAdminContext []string      `config:"pihole_admin_context"`
+	PIHolePassword     []string      `config:"pihole_password"`
+	PIHoleApiToken     []string      `config:"pihole_api_token"`
+	BindAddr           string        `config:"bind_addr"`
+	Port               uint16        `config:"port"`
+	Timeout            time.Duration `config:"timeout"`
 }
 
 func getDefaultEnvConfig() *EnvConfig {
 	return &EnvConfig{
-		PIHoleProtocol: []string{"http"},
-		PIHoleHostname: []string{"127.0.0.1"},
-		PIHolePort:     []uint16{80},
-		PIHoleContext:  []string{""},
-		PIHolePassword: []string{},
-		PIHoleApiToken: []string{},
-		BindAddr:       "0.0.0.0",
-		Port:           9617,
-		Timeout:        5 * time.Second,
+		PIHoleProtocol:     []string{"http"},
+		PIHoleHostname:     []string{"127.0.0.1"},
+		PIHolePort:         []uint16{80},
+		PIHoleAdminContext: []string{"admin"},
+		PIHolePassword:     []string{},
+		PIHoleApiToken:     []string{},
+		BindAddr:           "0.0.0.0",
+		Port:               9617,
+		Timeout:            5 * time.Second,
 	}
 }
 
@@ -123,10 +123,10 @@ func (c EnvConfig) Split() ([]Config, error) {
 			return nil, errors.New("Wrong number of ports. Port can be empty to use default, one value to use for all hosts, or match the number of hosts")
 		}
 
-		if hasData, data, isValid := extractStringConfig(c.PIHoleContext, i, hostsCount); hasData {
-			config.PIHoleContext = data
+		if hasData, data, isValid := extractStringConfig(c.PIHoleAdminContext, i, hostsCount); hasData {
+			config.PIHoleAdminContext = data
 		} else if !isValid {
-			return nil, errors.New("Wrong number of PIHoleContext. PIHoleContext can be empty to use default, one value to use for all hosts, or match the number of hosts")
+			return nil, errors.New("Wrong number of PIHoleAdminContext. PIHoleAdminContext can be empty to use default, one value to use for all hosts, or match the number of hosts")
 		}
 
 		if hasData, data, isValid := extractStringConfig(c.PIHoleProtocol, i, hostsCount); hasData {
@@ -182,25 +182,25 @@ func removeEmptyString(source []string) []string {
 	return result
 }
 
-func (c Config) piHoleURL() string {
+func (c Config) piHoleAdminURL() string {
 	s := fmt.Sprintf("%s://%s", c.PIHoleProtocol, c.PIHoleHostname)
 	if c.PIHolePort != 0 {
 		s += fmt.Sprintf(":%d", c.PIHolePort)
 	}
-	if c.PIHoleContext != "" {
-		s += fmt.Sprintf("/%s", c.PIHoleContext)
+	if c.PIHoleAdminContext != "" {
+		s += fmt.Sprintf("/%s", c.PIHoleAdminContext)
 	}
 	return s
 }
 
 // PIHoleStatsURL returns the stats url
 func (c Config) PIHoleStatsURL() string {
-	return c.piHoleURL() + "/admin/api.php?summaryRaw&overTimeData&topItems&recentItems&getQueryTypes&getForwardDestinations&getQuerySources&overTimeData10mins&jsonForceObject"
+	return c.piHoleAdminURL() + "/api.php?summaryRaw&overTimeData&topItems&recentItems&getQueryTypes&getForwardDestinations&getQuerySources&overTimeData10mins&jsonForceObject"
 }
 
 // PIHoleLoginURL returns the login url
 func (c Config) PIHoleLoginURL() string {
-	return c.piHoleURL() + "/admin/index.php?login"
+	return c.piHoleAdminURL() + "/index.php?login"
 }
 
 func (c EnvConfig) show() {
