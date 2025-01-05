@@ -200,6 +200,9 @@ scrape_configs:
 # Address to be used for the exporter
   -bind_addr string (optional) (default "0.0.0.0")
 
+# URL Context (first segments of URL path) to the PI-hole admin application
+  -pihole_admin_context string (optional) (default "admin")
+  
 # Port to be used for the exporter
   -port string (optional) (default "9617")
 ```
