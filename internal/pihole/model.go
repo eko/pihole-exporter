@@ -2,6 +2,12 @@ package pihole
 
 import "fmt"
 
+type BlockingStatus struct {
+	Blocking string  `json:"blocking"`
+	Timer    int     `json:"timer"`
+	Took     float64 `json:"took"`
+}
+
 type Upstreams struct {
 	Upstreams []struct {
 		IP         string `json:"ip"`
