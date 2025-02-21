@@ -143,7 +143,7 @@ var (
 			Namespace: "pihole",
 			Help:      "This represent the number of top sources requests made by Pi-hole by source host",
 		},
-		[]string{"hostname", "source"},
+		[]string{"hostname", "source", "source_name"},
 	)
 
 	// ForwardDestinations - The number of forward destinations requests made by Pi-hole by destination.
@@ -153,7 +153,7 @@ var (
 			Namespace: "pihole",
 			Help:      "This represent the number of forward destinations requests made by Pi-hole by destination",
 		},
-		[]string{"hostname", "destination"},
+		[]string{"hostname", "destination", "destination_name"},
 	)
 
 	// QueryTypes - The number of queries made by Pi-hole by type.
@@ -172,26 +172,6 @@ var (
 			Name:      "status",
 			Namespace: "pihole",
 			Help:      "This if Pi-hole is enabled",
-		},
-		[]string{"hostname"},
-	)
-
-	// QueriesLast10min - Number of queries in the last full slot of 10 minutes
-	QueriesLast10min = prometheus.NewGaugeVec(
-		prometheus.GaugeOpts{
-			Name:      "queries_last_10min",
-			Namespace: "pihole",
-			Help:      "Number of queries in the last full slot of 10 minutes",
-		},
-		[]string{"hostname"},
-	)
-
-	// AdsLast10min - Number of ads in the last full slot of 10 minutes
-	AdsLast10min = prometheus.NewGaugeVec(
-		prometheus.GaugeOpts{
-			Name:      "ads_last_10min",
-			Namespace: "pihole",
-			Help:      "Number of ads in the last full slot of 10 minutes",
 		},
 		[]string{"hostname"},
 	)
@@ -216,8 +196,6 @@ func Init() {
 	initMetric("forward_destinations", ForwardDestinations)
 	initMetric("querytypes", QueryTypes)
 	initMetric("status", Status)
-	initMetric("queries_last_10min", QueriesLast10min)
-	initMetric("ads_last_10min", AdsLast10min)
 }
 
 func initMetric(name string, metric *prometheus.GaugeVec) {

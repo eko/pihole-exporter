@@ -6,43 +6,135 @@ const (
 	enabledStatus = "enabled"
 )
 
-// Stats struct is the Pi-hole statistics JSON API corresponding model.
-type Stats struct {
-	DomainsBeingBlocked int                `json:"domains_being_blocked"`
-	DNSQueriesToday     int                `json:"dns_queries_today"`
-	AdsBlockedToday     int                `json:"ads_blocked_today"`
-	AdsPercentageToday  float64            `json:"ads_percentage_today"`
-	UniqueDomains       int                `json:"unique_domains"`
-	QueriesForwarded    int                `json:"queries_forwarded"`
-	QueriesCached       int                `json:"queries_cached"`
-	ClientsEverSeen     int                `json:"clients_ever_seen"`
-	UniqueClients       int                `json:"unique_clients"`
-	DNSQueriesAllTypes  int                `json:"dns_queries_all_types"`
-	ReplyUnknown        int                `json:"reply_UNKNOWN"`
-	ReplyNoData         int                `json:"reply_NODATA"`
-	ReplyNxDomain       int                `json:"reply_NXDOMAIN"`
-	ReplyCname          int                `json:"reply_CNAME"`
-	ReplyIP             int                `json:"reply_IP"`
-	ReplyDomain         int                `json:"reply_DOMAIN"`
-	ReplyRRName         int                `json:"reply_RRNAME"`
-	ReplyServFail       int                `json:"reply_SERVFAIL"`
-	ReplyRefused        int                `json:"reply_REFUSED"`
-	ReplyNotImp         int                `json:"reply_NOTIMP"`
-	ReplyOther          int                `json:"reply_OTHER"`
-	ReplyDNSSEC         int                `json:"reply_DNSSEC"`
-	ReplyNone           int                `json:"reply_NONE"`
-	ReplyBlob           int                `json:"reply_BLOB"`
-	TopQueries          map[string]int     `json:"top_queries"`
-	TopAds              map[string]int     `json:"top_ads"`
-	TopSources          map[string]int     `json:"top_sources"`
-	ForwardDestinations map[string]float64 `json:"forward_destinations"`
-	QueryTypes          map[string]float64 `json:"querytypes"`
-	Status              string             `json:"status"`
-	DomainsOverTime     map[int]int        `json:"domains_over_time"`
-	AdsOverTime         map[int]int        `json:"ads_over_time"`
+type Upstreams struct {
+	Upstreams []struct {
+		IP         string `json:"ip"`
+		Name       string `json:"name"`
+		Port       int    `json:"port"`
+		Count      int    `json:"count"`
+		Statistics struct {
+			Response float64 `json:"response"`
+			Variance float64 `json:"variance"`
+		} `json:"statistics"`
+	} `json:"upstreams"`
+	ForwardedQueries int     `json:"forwarded_queries"`
+	TotalQueries     int     `json:"total_queries"`
+	Took             float64 `json:"took"`
+}
+
+type TopDomains struct {
+	Domains []struct {
+		Domain string `json:"domain"`
+		Count  int    `json:"count"`
+	} `json:"domains"`
+	TotalQueries   int     `json:"total_queries"`
+	BlockedQueries int     `json:"blocked_queries"`
+	Took           float64 `json:"took"`
+}
+
+type PiHoleClient struct {
+	IP    string `json:"ip"`
+	Name  string `json:"name"`
+	Count int    `json:"count"`
+}
+
+// Response struct represents the full JSON response
+type TopClients struct {
+	Clients        []PiHoleClient `json:"clients"`
+	TotalQueries   int            `json:"total_queries"`
+	BlockedQueries int            `json:"blocked_queries"`
+	Took           float64        `json:"took"`
+}
+
+type StatsSummary struct {
+	Queries struct {
+		Total          int                `json:"total"`
+		Blocked        int                `json:"blocked"`
+		PercentBlocked float64            `json:"percent_blocked"`
+		UniqueDomains  int                `json:"unique_domains"`
+		Forwarded      int                `json:"forwarded"`
+		Cached         int                `json:"cached"`
+		Frequency      float64            `json:"frequency"`
+		Types          map[string]float64 `json:"types"`
+		Status         struct {
+			UNKNOWN              int `json:"UNKNOWN"`
+			GRAVITY              int `json:"GRAVITY"`
+			FORWARDED            int `json:"FORWARDED"`
+			CACHE                int `json:"CACHE"`
+			REGEX                int `json:"REGEX"`
+			DENYLIST             int `json:"DENYLIST"`
+			EXTERNALBLOCKEDIP    int `json:"EXTERNAL_BLOCKED_IP"`
+			EXTERNALBLOCKEDNULL  int `json:"EXTERNAL_BLOCKED_NULL"`
+			EXTERNALBLOCKEDNXRA  int `json:"EXTERNAL_BLOCKED_NXRA"`
+			GRAVITYCNAME         int `json:"GRAVITY_CNAME"`
+			REGEXCNAME           int `json:"REGEX_CNAME"`
+			DENYLISTCNAME        int `json:"DENYLIST_CNAME"`
+			RETRIED              int `json:"RETRIED"`
+			RETRIEDDNSSEC        int `json:"RETRIED_DNSSEC"`
+			INPROGRESS           int `json:"IN_PROGRESS"`
+			DBBUSY               int `json:"DBBUSY"`
+			SPECIALDOMAIN        int `json:"SPECIAL_DOMAIN"`
+			CACHESTALE           int `json:"CACHE_STALE"`
+			EXTERNALBLOCKEDEDE15 int `json:"EXTERNAL_BLOCKED_EDE15"`
+		} `json:"status"`
+		Replies struct {
+			UNKNOWN  int `json:"UNKNOWN"`
+			NODATA   int `json:"NODATA"`
+			NXDOMAIN int `json:"NXDOMAIN"`
+			CNAME    int `json:"CNAME"`
+			IP       int `json:"IP"`
+			DOMAIN   int `json:"DOMAIN"`
+			RRNAME   int `json:"RRNAME"`
+			SERVFAIL int `json:"SERVFAIL"`
+			REFUSED  int `json:"REFUSED"`
+			NOTIMP   int `json:"NOTIMP"`
+			OTHER    int `json:"OTHER"`
+			DNSSEC   int `json:"DNSSEC"`
+			NONE     int `json:"NONE"`
+			BLOB     int `json:"BLOB"`
+		} `json:"replies"`
+	} `json:"queries"`
+	Clients struct {
+		Active int `json:"active"`
+		Total  int `json:"total"`
+	} `json:"clients"`
+	Gravity struct {
+		DomainsBeingBlocked int `json:"domains_being_blocked"`
+		LastUpdate          int `json:"last_update"`
+	} `json:"gravity"`
+	Took float64 `json:"took"`
 }
 
 // ToString method returns a string of the current statistics struct.
-func (s *Stats) String() string {
-	return fmt.Sprintf("%d ads blocked / %d total DNS queries", s.AdsBlockedToday, s.DNSQueriesAllTypes)
+func (s *StatsSummary) String() string {
+	return fmt.Sprintf("%d ads blocked / %d total DNS queries", s.Queries.Blocked, s.Queries.Total)
+}
+
+func MergeClients(clients1, clients2 []PiHoleClient) []PiHoleClient {
+	clientMap := make(map[string]PiHoleClient)
+
+	// Function to add clients to the map
+	addClients := func(clients []PiHoleClient) {
+		for _, client := range clients {
+			key := client.IP // or client.Name if IPs are not unique
+			if existing, found := clientMap[key]; found {
+				existing.Count += client.Count
+				clientMap[key] = existing
+			} else {
+				clientMap[key] = client
+			}
+		}
+	}
+
+	// Add both arrays
+	addClients(clients1)
+	addClients(clients2)
+
+	// Convert map back to slice
+	mergedClients := make([]PiHoleClient, 0, len(clientMap))
+	for _, client := range clientMap {
+		mergedClients = append(mergedClients, client)
+	}
+
+	return mergedClients
 }
