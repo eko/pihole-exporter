@@ -2,10 +2,6 @@ package pihole
 
 import "fmt"
 
-const (
-	enabledStatus = "enabled"
-)
-
 type Upstreams struct {
 	Upstreams []struct {
 		IP         string `json:"ip"`

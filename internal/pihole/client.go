@@ -128,9 +128,6 @@ func (c *Client) setMetrics(stats *StatsSummary, blockedDomains *TopDomains, per
 	metrics.Reply.WithLabelValues(c.config.PIHoleHostname, "none").Set(float64(stats.Queries.Replies.NONE))
 	metrics.Reply.WithLabelValues(c.config.PIHoleHostname, "blob").Set(float64(stats.Queries.Replies.BLOB))
 
-	var isEnabled int = 1
-	metrics.Status.WithLabelValues(c.config.PIHoleHostname).Set(float64(isEnabled))
-
 	for _, domain := range permittedDomains.Domains {
 		metrics.TopQueries.WithLabelValues(c.config.PIHoleHostname, domain.Domain).Set(float64(domain.Count))
 	}

@@ -165,16 +165,6 @@ var (
 		},
 		[]string{"hostname", "type"},
 	)
-
-	// Status - Is Pi-hole enabled?
-	Status = prometheus.NewGaugeVec(
-		prometheus.GaugeOpts{
-			Name:      "status",
-			Namespace: "pihole",
-			Help:      "This if Pi-hole is enabled",
-		},
-		[]string{"hostname"},
-	)
 )
 
 // Init initializes all Prometheus metrics made available by Pi-hole exporter.
@@ -195,7 +185,6 @@ func Init() {
 	initMetric("top_sources", TopSources)
 	initMetric("forward_destinations", ForwardDestinations)
 	initMetric("querytypes", QueryTypes)
-	initMetric("status", Status)
 }
 
 func initMetric(name string, metric *prometheus.GaugeVec) {
