@@ -91,7 +91,17 @@ var (
 		prometheus.GaugeOpts{
 			Name:      "unique_clients",
 			Namespace: "pihole",
-			Help:      "This represent the number of unique clients seen",
+			Help:      "This represent the number of unique clients seen in the last 24h",
+		},
+		[]string{"hostname"},
+	)
+
+	// RequestRate - The number of request to Pi-hole per second.
+	RequestRate = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name:      "request_rate",
+			Namespace: "pihole",
+			Help:      "This represent the number of requests per second",
 		},
 		[]string{"hostname"},
 	)
@@ -156,6 +166,24 @@ var (
 		[]string{"hostname", "destination", "destination_name"},
 	)
 
+	ForwardDestinationsResponseTime = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name:      "forward_destinations_responsetime",
+			Namespace: "pihole",
+			Help:      "This represent the seconds a forward destinations took to process a requests made by Pi-hole",
+		},
+		[]string{"hostname", "destination", "destination_name"},
+	)
+
+	ForwardDestinationsResponseVariance = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name:      "forward_destinations_responsevariance",
+			Namespace: "pihole",
+			Help:      "This represent the variants in response time a forward destinations took to process a requests made by Pi-hole",
+		},
+		[]string{"hostname", "destination", "destination_name"},
+	)
+
 	// QueryTypes - The number of queries made by Pi-hole by type.
 	QueryTypes = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
@@ -194,6 +222,9 @@ func Init() {
 	initMetric("top_ads", TopAds)
 	initMetric("top_sources", TopSources)
 	initMetric("forward_destinations", ForwardDestinations)
+	initMetric("destination_responsetime", ForwardDestinationsResponseTime)
+	initMetric("destination_responsevariance", ForwardDestinationsResponseVariance)
+	initMetric("request_rate", RequestRate)
 	initMetric("querytypes", QueryTypes)
 	initMetric("status", Status)
 }

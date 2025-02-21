@@ -109,8 +109,9 @@ func (c *Client) setMetrics(stats *StatsSummary, blockedDomains *TopDomains, per
 	metrics.UniqueDomains.WithLabelValues(c.config.PIHoleHostname).Set(float64(stats.Queries.UniqueDomains))
 	metrics.QueriesForwarded.WithLabelValues(c.config.PIHoleHostname).Set(float64(stats.Queries.Forwarded))
 	metrics.QueriesCached.WithLabelValues(c.config.PIHoleHostname).Set(float64(stats.Queries.Cached))
+	metrics.RequestRate.WithLabelValues(c.config.PIHoleHostname).Set(float64(stats.Queries.Frequency))
 	metrics.ClientsEverSeen.WithLabelValues(c.config.PIHoleHostname).Set(float64(stats.Clients.Total))
-	metrics.UniqueClients.WithLabelValues(c.config.PIHoleHostname).Set(float64(stats.Clients.Total))
+	metrics.UniqueClients.WithLabelValues(c.config.PIHoleHostname).Set(float64(stats.Clients.Active))
 	metrics.DNSQueriesAllTypes.WithLabelValues(c.config.PIHoleHostname).Set(float64(stats.Queries.Total))
 	if piHoleStatus.Blocking == "enabled" {
 		metrics.Status.WithLabelValues(c.config.PIHoleHostname).Set(1)
@@ -147,6 +148,8 @@ func (c *Client) setMetrics(stats *StatsSummary, blockedDomains *TopDomains, per
 
 	for _, upstream := range upstreams.Upstreams {
 		metrics.ForwardDestinations.WithLabelValues(c.config.PIHoleHostname, upstream.IP, upstream.Name).Set(float64(upstream.Count))
+		metrics.ForwardDestinationsResponseTime.WithLabelValues(c.config.PIHoleHostname, upstream.IP, upstream.Name).Set(upstream.Statistics.Response)
+		metrics.ForwardDestinationsResponseVariance.WithLabelValues(c.config.PIHoleHostname, upstream.IP, upstream.Name).Set(upstream.Statistics.Variance)
 	}
 
 	for queryType, value := range stats.Queries.Types {
