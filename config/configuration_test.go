@@ -33,9 +33,7 @@ func TestSplitDefault(t *testing.T) {
 	clientConfig := clientConfigs[0]
 	assert.Equal("127.0.0.1", clientConfig.PIHoleHostname)
 	assert.Equal("http", clientConfig.PIHoleProtocol)
-	assert.Equal("admin", clientConfig.PIHoleAdminContext)
 	assert.Equal(uint16(80), clientConfig.PIHolePort)
-	assert.Empty(clientConfig.PIHoleApiToken)
 	assert.Empty(clientConfig.PIHolePassword)
 }
 
@@ -44,8 +42,6 @@ func TestSplitMultipleHostWithSameConfig(t *testing.T) {
 
 	env := getDefaultEnvConfig()
 	env.PIHoleHostname = []string{"127.0.0.1", "127.0.0.2", "127.0.0.3"}
-	env.PIHoleApiToken = []string{"api-token"}
-	env.PIHoleAdminContext = []string{"foo"}
 	env.PIHolePort = []uint16{8080}
 
 	clientConfigs, err := env.Split()
@@ -85,7 +81,6 @@ func TestSplitMultipleHostWithSameConfig(t *testing.T) {
 			assert.Equal(tc.Host, clientConfig.PIHoleHostname)
 			assert.Equal(tc.Protocol, clientConfig.PIHoleProtocol)
 			assert.Equal(tc.Port, clientConfig.PIHolePort)
-			assert.Equal("api-token", clientConfig.PIHoleApiToken)
 			assert.Empty(clientConfig.PIHolePassword)
 		})
 	}
@@ -96,8 +91,6 @@ func TestSplitMultipleHostWithMultipleConfigs(t *testing.T) {
 
 	env := getDefaultEnvConfig()
 	env.PIHoleHostname = []string{"127.0.0.1", "127.0.0.2", "127.0.0.3"}
-	env.PIHoleApiToken = []string{"api-token1", "", "api-token3"}
-	env.PIHoleAdminContext = []string{"", "foo", "bar"}
 	env.PIHolePassword = []string{"", "password2", ""}
 	env.PIHolePort = []uint16{8081, 8082, 8083}
 
@@ -145,9 +138,7 @@ func TestSplitMultipleHostWithMultipleConfigs(t *testing.T) {
 
 			assert.Equal(tc.Host, clientConfig.PIHoleHostname)
 			assert.Equal(tc.Protocol, clientConfig.PIHoleProtocol)
-			assert.Equal(tc.AdminContext, clientConfig.PIHoleAdminContext)
 			assert.Equal(tc.Port, clientConfig.PIHolePort)
-			assert.Equal(tc.ApiToken, clientConfig.PIHoleApiToken)
 			assert.Equal(tc.Password, clientConfig.PIHolePassword)
 		})
 	}
@@ -158,7 +149,6 @@ func TestWrongNumberOfApiTokenParams(t *testing.T) {
 
 	env := getDefaultEnvConfig()
 	env.PIHoleHostname = []string{"127.0.0.1", "127.0.0.2", "127.0.0.3"}
-	env.PIHoleApiToken = []string{"api-token1", "api-token2"}
 	env.PIHolePort = []uint16{808}
 
 	clientConfigs, err := env.Split()
@@ -171,8 +161,6 @@ func TestWrongNumberOfAdminContextParams(t *testing.T) {
 
 	env := getDefaultEnvConfig()
 	env.PIHoleHostname = []string{"127.0.0.1", "127.0.0.2", "127.0.0.3"}
-	env.PIHoleApiToken = []string{"api-token"}
-	env.PIHoleAdminContext = []string{"admin1", "admin2"}
 	env.PIHolePort = []uint16{808}
 
 	clientConfigs, err := env.Split()
