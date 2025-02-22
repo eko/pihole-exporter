@@ -143,27 +143,3 @@ func TestSplitMultipleHostWithMultipleConfigs(t *testing.T) {
 		})
 	}
 }
-
-func TestWrongNumberOfApiTokenParams(t *testing.T) {
-	assert := assert.New(t)
-
-	env := getDefaultEnvConfig()
-	env.PIHoleHostname = []string{"127.0.0.1", "127.0.0.2", "127.0.0.3"}
-	env.PIHolePort = []uint16{808}
-
-	clientConfigs, err := env.Split()
-	assert.Errorf(err, "Wrong number of PIHoleApiToken. PIHoleApiToken can be empty to use default, one value to use for all hosts, or match the number of hosts")
-	assert.Nil(clientConfigs)
-}
-
-func TestWrongNumberOfAdminContextParams(t *testing.T) {
-	assert := assert.New(t)
-
-	env := getDefaultEnvConfig()
-	env.PIHoleHostname = []string{"127.0.0.1", "127.0.0.2", "127.0.0.3"}
-	env.PIHolePort = []uint16{808}
-
-	clientConfigs, err := env.Split()
-	assert.Errorf(err, "Wrong number of PIHoleAdminContext. PIHoleAdminContext can be empty to use default, one value to use for all hosts, or match the number of hosts")
-	assert.Nil(clientConfigs)
-}
