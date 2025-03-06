@@ -81,7 +81,7 @@ func (c *Config) String() string {
 	for i := 0; i < fields.NumField(); i++ {
 		valueField := fields.Field(i)
 		typeField := fields.Type().Field(i)
-		if typeField.Name != "PIHolePassword" && typeField.Name != "PIHoleApiToken" {
+		if typeField.Name != "PIHolePassword" {
 			buffer[i] = fmt.Sprintf("%s=%v", typeField.Name, valueField.Interface())
 		} else if valueField.Len() > 0 {
 			buffer[i] = fmt.Sprintf("%s=%s", typeField.Name, "*****")
@@ -175,7 +175,7 @@ func (c EnvConfig) show() {
 		typeField := val.Type().Field(i)
 
 		// Do not print password or api token but do print the authentication method
-		if typeField.Name != "PIHolePassword" && typeField.Name != "PIHoleApiToken" {
+		if typeField.Name != "PIHolePassword" {
 			log.Info(fmt.Sprintf("%s : %v", typeField.Name, valueField.Interface()))
 		} else {
 			showAuthenticationMethod(typeField.Name, valueField.Len())
