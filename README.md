@@ -1,6 +1,6 @@
 # Pi-hole Prometheus Exporter
 
-![Build/Push (master)](https://github.com/eko/pihole-exporter/workflows/Build/Push%20(master)/badge.svg)
+![Build/Push (master)](<https://github.com/eko/pihole-exporter/workflows/Build/Push%20(master)/badge.svg>)
 [![GoDoc](https://godoc.org/github.com/eko/pihole-exporter?status.png)](https://godoc.org/github.com/eko/pihole-exporter)
 [![GoReportCard](https://goreportcard.com/badge/github.com/eko/pihole-exporter)](https://goreportcard.com/report/github.com/eko/pihole-exporter)
 
@@ -10,12 +10,12 @@ This is a Prometheus exporter for [Pi-hole](https://pi-hole.net/)'s Raspberry PI
 
 Available Grafana Dasboards:
 
-* Prometheus: [Grafana Labs](https://grafana.com/grafana/dashboards/10176-pi-hole-exporter/) / [JSON/Github](https://raw.githubusercontent.com/eko/pihole-exporter/master/grafana/dashboard.json) --> [Preview](https://raw.githubusercontent.com/eko/pihole-exporter/master/dashboard.jpg)
-* InfluxDB 2 (Flux): [Grafana Labs](https://grafana.com/grafana/dashboards/17094-pi-hole-exporter-influxdb-2/) / [JSON/Github](https://raw.githubusercontent.com/eko/pihole-exporter/master/grafana/dashboard-influxdb2.json) --> [Preview](https://raw.githubusercontent.com/eko/pihole-exporter/master/dashboard-influxdb2.png)
+- Prometheus: [Grafana Labs](https://grafana.com/grafana/dashboards/10176-pi-hole-exporter/) / [JSON/Github](https://raw.githubusercontent.com/eko/pihole-exporter/master/grafana/dashboard.json) --> [Preview](https://raw.githubusercontent.com/eko/pihole-exporter/master/dashboard.jpg)
+- InfluxDB 2 (Flux): [Grafana Labs](https://grafana.com/grafana/dashboards/17094-pi-hole-exporter-influxdb-2/) / [JSON/Github](https://raw.githubusercontent.com/eko/pihole-exporter/master/grafana/dashboard-influxdb2.json) --> [Preview](https://raw.githubusercontent.com/eko/pihole-exporter/master/dashboard-influxdb2.png)
 
 ## Prerequisites
 
-* [Go](https://golang.org/doc/)
+- [Go](https://golang.org/doc/)
 
 ## Installation
 
@@ -23,19 +23,19 @@ Available Grafana Dasboards:
 
 You can download the latest version of the binary built for your architecture here:
 
-* Architecture **i386** [
-    [Linux](https://github.com/eko/pihole-exporter/releases/latest/download/pihole_exporter-linux-386) /
-    [Windows](https://github.com/eko/pihole-exporter/releases/latest/download/pihole_exporter-windows-386.exe)
-]
-* Architecture **amd64** [
-    [Darwin](https://github.com/eko/pihole-exporter/releases/latest/download/pihole_exporter-darwin-amd64) /
-    [Linux](https://github.com/eko/pihole-exporter/releases/latest/download/pihole_exporter-linux-amd64) /
-    [Windows](https://github.com/eko/pihole-exporter/releases/latest/download/pihole_exporter-windows-amd64.exe)
-]
-* Architecture **arm** [
-    [Darwin](https://github.com/eko/pihole-exporter/releases/latest/download/pihole_exporter-darwin-arm64) /
-    [Linux](https://github.com/eko/pihole-exporter/releases/latest/download/pihole_exporter-linux-arm)
-]
+- Architecture **i386** [
+  [Linux](https://github.com/eko/pihole-exporter/releases/latest/download/pihole_exporter-linux-386) /
+  [Windows](https://github.com/eko/pihole-exporter/releases/latest/download/pihole_exporter-windows-386.exe)
+  ]
+- Architecture **amd64** [
+  [Darwin](https://github.com/eko/pihole-exporter/releases/latest/download/pihole_exporter-darwin-amd64) /
+  [Linux](https://github.com/eko/pihole-exporter/releases/latest/download/pihole_exporter-linux-amd64) /
+  [Windows](https://github.com/eko/pihole-exporter/releases/latest/download/pihole_exporter-windows-amd64.exe)
+  ]
+- Architecture **arm** [
+  [Darwin](https://github.com/eko/pihole-exporter/releases/latest/download/pihole_exporter-darwin-arm64) /
+  [Linux](https://github.com/eko/pihole-exporter/releases/latest/download/pihole_exporter-linux-arm)
+  ]
 
 ### Using Docker
 
@@ -57,7 +57,7 @@ Or use PiHole's `WEBPASSWORD` as an API token instead of the password
 $ API_TOKEN=$(awk -F= -v key="WEBPASSWORD" '$1==key {print $2}' /etc/pihole/setupVars.conf)
 $ docker run \
   -e 'PIHOLE_HOSTNAME=192.168.1.2' \
-  -e "PIHOLE_API_TOKEN=$API_TOKEN" \
+  -e "PIHOLE_PASSWORD=$API_TOKEN" \
   -e 'PORT=9617' \
   -p 9617:9617 \
   ekofr/pihole-exporter:latest
@@ -84,7 +84,7 @@ To do so, you can specify a list of hostnames, protocols, passwords/API tokens a
 $ docker run \
   -e 'PIHOLE_PROTOCOL=http,http,http" \
   -e 'PIHOLE_HOSTNAME=192.168.1.2,192.168.1.3,192.168.1.4"' \
-  -e "PIHOLE_API_TOKEN=$API_TOKEN1,$API_TOKEN2,$API_TOKEN3" \
+  -e "PIHOLE_PASSWORD=$API_TOKEN1,$API_TOKEN2,$API_TOKEN3" \
   -e "PIHOLE_PORT=8080,8081,8080" \
   -e 'PORT=9617' \
   -p 9617:9617 \
@@ -97,7 +97,7 @@ If port, protocol and API token/password is the same for all instances, you can 
 $ docker run \
   -e 'PIHOLE_PROTOCOL=http" \
   -e 'PIHOLE_HOSTNAME=192.168.1.2,192.168.1.3,192.168.1.4"' \
-  -e "PIHOLE_API_TOKEN=$API_TOKEN" \
+  -e "PIHOLE_PASSWORD=$API_TOKEN" \
   -e "PIHOLE_PORT=8080" \
   -e 'PORT=9617' \
   -p 9617:9617 \
@@ -107,6 +107,7 @@ $ docker run \
 ### From sources
 
 Optionally, you can download and build it from the sources. You have to retrieve the project sources by using one of the following way:
+
 ```bash
 $ go install github.com/eko/pihole-exporter@latest
 # or
@@ -116,10 +117,11 @@ $ git clone https://github.com/eko/pihole-exporter.git
 Install the needed vendors:
 
 ```
-$ GO111MODULE=on go mod vendor
+$ go mod vendor
 ```
 
 Then, build the binary (here, an example to run on Raspberry PI ARM architecture):
+
 ```bash
 $ GOOS=linux GOARCH=arm GOARM=7 go build -o pihole_exporter .
 ```
@@ -138,7 +140,7 @@ Or use PiHole's `WEBPASSWORD` as an API token instead of the password
 
 ```bash
 $ API_TOKEN=$(awk -F= -v key="WEBPASSWORD" '$1==key {print $2}' /etc/pihole/setupVars.conf)
-$ ./pihole_exporter -pihole_hostname 192.168.1.10 -pihole_api_token $API_TOKEN
+$ ./pihole_exporter -pihole_hostname 192.168.1.10 -pihole_password $API_TOKEN
 ```
 
 ```bash
@@ -178,12 +180,13 @@ Once the exporter is running, you also have to update your `prometheus.yml` conf
 
 ```yaml
 scrape_configs:
-  - job_name: 'pihole'
-    static_configs:
-      - targets: ['localhost:9617']
+    - job_name: "pihole"
+      static_configs:
+          - targets: ["localhost:9617"]
 ```
 
 ## Available CLI options
+
 ```bash
 # Hostname of the host(s) where Pi-hole is installed
   -pihole_hostname string (optional) (default "127.0.0.1")
@@ -195,42 +198,41 @@ scrape_configs:
   -timeout duration (optional) (default 5s)
 
 # WEBPASSWORD / api token defined on the Pi-hole interface at `/etc/pihole/setupVars.conf`
-  -pihole_api_token string (optional)
+  -pihole_password string (optional)
 
 # Address to be used for the exporter
   -bind_addr string (optional) (default "0.0.0.0")
 
 # URL Context (first segments of URL path) to the PI-hole admin application
   -pihole_admin_context string (optional) (default "admin")
-  
+
 # Port to be used for the exporter
   -port string (optional) (default "9617")
 ```
 
 ## Available Prometheus metrics
 
-| Metric name                  | Description                                                                               |
-|:----------------------------:|-------------------------------------------------------------------------------------------|
+|         Metric name          | Description                                                                               |
+| :--------------------------: | ----------------------------------------------------------------------------------------- |
 | pihole_domains_being_blocked | This represent the number of domains being blocked                                        |
-| pihole_dns_queries_today     | This represent the number of DNS queries made over the current day                        |
-| pihole_ads_blocked_today     | This represent the number of ads blocked over the current day                             |
+|   pihole_dns_queries_today   | This represent the number of DNS queries made over the current day                        |
+|   pihole_ads_blocked_today   | This represent the number of ads blocked over the current day                             |
 | pihole_ads_percentage_today  | This represent the percentage of ads blocked over the current day                         |
-| pihole_unique_domains        | This represent the number of unique domains seen                                          |
-| pihole_queries_forwarded     | This represent the number of queries forwarded                                            |
-| pihole_queries_cached        | This represent the number of queries cached                                               |
-| pihole_clients_ever_seen     | This represent the number of clients ever seen                                            |
-| pihole_unique_clients        | This represent the number of unique clients seen                                          |
+|    pihole_unique_domains     | This represent the number of unique domains seen                                          |
+|   pihole_queries_forwarded   | This represent the number of queries forwarded                                            |
+|    pihole_queries_cached     | This represent the number of queries cached                                               |
+|   pihole_clients_ever_seen   | This represent the number of clients ever seen                                            |
+|    pihole_unique_clients     | This represent the number of unique clients seen                                          |
 | pihole_dns_queries_all_types | This represent the number of DNS queries made for all types                               |
-| pihole_reply                 | This represent the number of replies made for all types                                   |
-| pihole_top_queries           | This represent the number of top queries made by Pi-hole by domain                        |
-| pihole_top_ads               | This represent the number of top ads made by Pi-hole by domain                            |
-| pihole_top_sources           | This represent the number of top sources requests made by Pi-hole by source host          |
+|         pihole_reply         | This represent the number of replies made for all types                                   |
+|      pihole_top_queries      | This represent the number of top queries made by Pi-hole by domain                        |
+|        pihole_top_ads        | This represent the number of top ads made by Pi-hole by domain                            |
+|      pihole_top_sources      | This represent the number of top sources requests made by Pi-hole by source host          |
 | pihole_forward_destinations  | This represent the number of forward destinations requests made by Pi-hole by destination |
-| pihole_querytypes            | This represent the number of queries made by Pi-hole by type                              |
-| pihole_status                | This represent if Pi-hole is enabled                                                      |
-| queries_last_10min           | This represent the number of queries in the last full slot of 10 minutes                  |
-| ads_last_10min               | This represent the number of ads in the last full slot of 10 minutes                      |
-
+|      pihole_querytypes       | This represent the number of queries made by Pi-hole by type                              |
+|        pihole_status         | This represent if Pi-hole is enabled                                                      |
+|      queries_last_10min      | This represent the number of queries in the last full slot of 10 minutes                  |
+|        ads_last_10min        | This represent the number of ads in the last full slot of 10 minutes                      |
 
 ## Pihole-Exporter Helm Chart
 

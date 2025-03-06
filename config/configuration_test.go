@@ -11,7 +11,7 @@ const (
 	PIHOLE_HOSTNAME      = "PIHOLE_HOSTNAME"
 	PIHOLE_PORT          = "PIHOLE_PORT"
 	PIHOLE_ADMIN_CONTEXT = "PIHOLE_ADMIN_CONTEXT"
-	PIHOLE_API_TOKEN     = "PIHOLE_API_TOKEN"
+	PIHOLE_PASSWORD      = "PIHOLE_PASSWORD"
 	PIHOLE_PROTOCOL      = "PIHOLE_PROTOCOL"
 )
 
@@ -103,7 +103,6 @@ func TestSplitMultipleHostWithMultipleConfigs(t *testing.T) {
 		Port         uint16
 		AdminContext string
 		Protocol     string
-		ApiToken     string
 		Password     string
 	}{
 		{
@@ -111,7 +110,6 @@ func TestSplitMultipleHostWithMultipleConfigs(t *testing.T) {
 			Port:         8081,
 			AdminContext: "",
 			Protocol:     "http",
-			ApiToken:     "api-token1",
 			Password:     "",
 		},
 		{
@@ -119,7 +117,6 @@ func TestSplitMultipleHostWithMultipleConfigs(t *testing.T) {
 			Port:         8082,
 			AdminContext: "foo",
 			Protocol:     "http",
-			ApiToken:     "",
 			Password:     "password2",
 		},
 		{
@@ -127,7 +124,6 @@ func TestSplitMultipleHostWithMultipleConfigs(t *testing.T) {
 			Port:         8083,
 			AdminContext: "bar",
 			Protocol:     "http",
-			ApiToken:     "api-token3",
 			Password:     "",
 		},
 	}
