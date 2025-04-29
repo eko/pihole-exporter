@@ -29,13 +29,22 @@ type authResponse struct {
 	} `json:"session"`
 }
 
-// NewAPIClient initializes and returns a new APIClient.
-func NewAPIClient(baseURL, password string, timeout time.Duration) *APIClient {
+// NewAPIClient initializes and returns a new APIClient with optional TLS verification disabling.
+func NewAPIClient(baseURL string, password string, timeout time.Duration, disableTLSVerification bool) *APIClient {
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify: skipTLSmatchSNI,
+	}
+	
+	transport := &http.Transport{
+		TLSClientConfig: tlsConfig,
+	}
+
 	return &APIClient{
 		BaseURL:  baseURL,
 		password: password,
 		Client: &http.Client{
-			Timeout: timeout,
+			Timeout:   timeout,
+			Transport: transport,
 		},
 	}
 }
