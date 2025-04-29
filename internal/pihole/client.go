@@ -3,7 +3,6 @@ package pihole
 import (
 	"fmt"
 	"net/http"
-	"os"
 
 	log "github.com/sirupsen/logrus"
 
@@ -59,15 +58,14 @@ type Client struct {
 func NewClient(config *config.Config, envConfig *config.EnvConfig) *Client {
 	err := config.Validate()
 	if err != nil {
-		log.Error(err)
-		os.Exit(1)
+		log.Fatalf("err: couldn't validate passed Config: %v", err)
 	}
 
-	log.Printf("Creating client with config %s\n", config)
+	log.Printf("Creating client with config %+v\n", config)
 
 	return &Client{
 		config:    config,
-		apiClient: *NewAPIClient(fmt.Sprintf("%s://%s:%d", config.PIHoleProtocol, config.PIHoleHostname, config.PIHolePort), config.PIHolePassword, envConfig.Timeout),
+		apiClient: *NewAPIClient(fmt.Sprintf("%s://%s:%d", config.PIHoleProtocol, config.PIHoleHostname, config.PIHolePort), config.PIHolePassword, envConfig.Timeout, config.SkipTLSVerification),
 		Status:    make(chan *ClientChannel, 1),
 	}
 }

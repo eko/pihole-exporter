@@ -19,23 +19,25 @@ import (
 
 // Config is the exporter CLI configuration.
 type Config struct {
-	PIHoleProtocol string `config:"pihole_protocol"`
-	PIHoleHostname string `config:"pihole_hostname"`
-	PIHolePort     uint16 `config:"pihole_port"`
-	PIHolePassword string `config:"pihole_password"`
-	BindAddr       string `config:"bind_addr"`
-	Port           uint16 `config:"port"`
+	PIHoleProtocol      string `config:"pihole_protocol"`
+	PIHoleHostname      string `config:"pihole_hostname"`
+	PIHolePort          uint16 `config:"pihole_port"`
+	PIHolePassword      string `config:"pihole_password"`
+	BindAddr            string `config:"bind_addr"`
+	Port                uint16 `config:"port"`
+	SkipTLSVerification bool `config:"skip_tls_verification"`
 }
 
 type EnvConfig struct {
-	PIHoleProtocol []string      `config:"pihole_protocol"`
-	PIHoleHostname []string      `config:"pihole_hostname"`
-	PIHolePort     []uint16      `config:"pihole_port"`
-	PIHolePassword []string      `config:"pihole_password"`
-	BindAddr       string        `config:"bind_addr"`
-	Port           uint16        `config:"port"`
-	Timeout        time.Duration `config:"timeout"`
-}
+	PIHoleProtocol      []string      `config:"pihole_protocol"`
+	PIHoleHostname      []string      `config:"pihole_hostname"`
+	PIHolePort          []uint16      `config:"pihole_port"`
+	PIHolePassword      []string      `config:"pihole_password"`
+	BindAddr            string        `config:"bind_addr"`
+	Port                uint16        `config:"port"`
+	Timeout             time.Duration `config:"timeout"`
+	SkipTLSVerification bool `config:"skip_tls_verification"`
+	}
 
 func getDefaultEnvConfig() *EnvConfig {
 	return &EnvConfig{
@@ -46,6 +48,7 @@ func getDefaultEnvConfig() *EnvConfig {
 		BindAddr:       "0.0.0.0",
 		Port:           9617,
 		Timeout:        5 * time.Second,
+		SkipTLSVerification: false,
 	}
 }
 
@@ -61,7 +64,7 @@ func Load() (*EnvConfig, []Config, error) {
 	cfg := getDefaultEnvConfig()
 	err := loader.Load(context.Background(), cfg)
 	if err != nil {
-		panic(err)
+		log.Fatalf("error returned when passing config into loader.Load(): %v", err)
 	}
 
 	cfg.show()

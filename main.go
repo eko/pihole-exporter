@@ -1,7 +1,7 @@
 package main
 
 import (
-	"log"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/eko/pihole-exporter/config"
 	"github.com/eko/pihole-exporter/internal/metrics"
@@ -13,7 +13,7 @@ import (
 func main() {
 	envConf, clientConfigs, err := config.Load()
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Fatalf("Failed to load configuration: %v", err)
 	}
 
 	metrics.Init()
@@ -40,7 +40,7 @@ func main() {
 	case <-serverDead:
 	}
 
-	log.Println("pihole-exporter HTTP server stopped")
+	log.Info("pihole-exporter HTTP server stopped")
 }
 
 func buildClients(clientConfigs []config.Config, envConfig *config.EnvConfig) []*pihole.Client {

@@ -32,7 +32,7 @@ type authResponse struct {
 // NewAPIClient initializes and returns a new APIClient with optional TLS verification disabling.
 func NewAPIClient(baseURL string, password string, timeout time.Duration, disableTLSVerification bool) *APIClient {
 	tlsConfig := &tls.Config{
-		InsecureSkipVerify: skipTLSmatchSNI,
+		InsecureSkipVerify: disableTLSVerification,
 	}
 	
 	transport := &http.Transport{
