@@ -231,5 +231,5 @@ func Init() {
 
 func initMetric(name string, metric *prometheus.GaugeVec) {
 	prometheus.MustRegister(metric)
-	log.Info("New Prometheus metric registered: ", name)
+	log.Debugf("New Prometheus metric registered: %s", name)
 }

@@ -2,7 +2,6 @@ package config
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"reflect"
 	"runtime"
@@ -25,7 +24,7 @@ type Config struct {
 	PIHolePassword      string `config:"pihole_password"`
 	BindAddr            string `config:"bind_addr"`
 	Port                uint16 `config:"port"`
-	SkipTLSVerification bool `config:"skip_tls_verification"`
+	SkipTLSVerification bool   `config:"skip_tls_verification"`
 }
 
 type EnvConfig struct {
@@ -36,18 +35,18 @@ type EnvConfig struct {
 	BindAddr            string        `config:"bind_addr"`
 	Port                uint16        `config:"port"`
 	Timeout             time.Duration `config:"timeout"`
-	SkipTLSVerification bool `config:"skip_tls_verification"`
-	}
+	SkipTLSVerification bool          `config:"skip_tls_verification"`
+}
 
 func getDefaultEnvConfig() *EnvConfig {
 	return &EnvConfig{
-		PIHoleProtocol: []string{"http"},
-		PIHoleHostname: []string{"127.0.0.1"},
-		PIHolePort:     []uint16{80},
-		PIHolePassword: []string{},
-		BindAddr:       "0.0.0.0",
-		Port:           9617,
-		Timeout:        5 * time.Second,
+		PIHoleProtocol:      []string{"http"},
+		PIHoleHostname:      []string{"127.0.0.1"},
+		PIHolePort:          []uint16{80},
+		PIHolePassword:      []string{},
+		BindAddr:            "0.0.0.0",
+		Port:                9617,
+		Timeout:             5 * time.Second,
 		SkipTLSVerification: false,
 	}
 }
@@ -64,7 +63,7 @@ func Load() (*EnvConfig, []Config, error) {
 	cfg := getDefaultEnvConfig()
 	err := loader.Load(context.Background(), cfg)
 	if err != nil {
-		log.Fatalf("error returned when passing config into loader.Load(): %v", err)
+		log.Fatalf("error returned when passing config into loader.Load(): %+v", err)
 	}
 
 	cfg.show()
@@ -76,29 +75,32 @@ func Load() (*EnvConfig, []Config, error) {
 	}
 }
 
+// String implements fmt.Stringer with a modern strings.Builder implementation.
 func (c *Config) String() string {
-	ref := reflect.ValueOf(c)
-	fields := ref.Elem()
+	var b strings.Builder
+	b.WriteString(fmt.Sprintf("<Config@%X ", &c))
 
-	buffer := make([]string, fields.NumField(), fields.NumField())
-	for i := 0; i < fields.NumField(); i++ {
-		valueField := fields.Field(i)
-		typeField := fields.Type().Field(i)
-		if typeField.Name != "PIHolePassword" {
-			buffer[i] = fmt.Sprintf("%s=%v", typeField.Name, valueField.Interface())
-		} else if valueField.Len() > 0 {
-			buffer[i] = fmt.Sprintf("%s=%s", typeField.Name, "*****")
+	ref := reflect.ValueOf(c).Elem()
+	for i := 0; i < ref.NumField(); i++ {
+		tf := ref.Type().Field(i)
+		vf := ref.Field(i)
+		if tf.Name == "PIHolePassword" {
+			if vf.Len() > 0 {
+				b.WriteString("PIHolePassword=*****,")
+			}
+			continue
 		}
+		fmt.Fprintf(&b, "%s=%v,", tf.Name, vf.Interface())
 	}
-
-	buffer = removeEmptyString(buffer)
-	return fmt.Sprintf("<Config@%X %s>", &c, strings.Join(buffer, ", "))
+	result := strings.TrimSuffix(b.String(), ",")
+	result += ">"
+	return result
 }
 
-// Validate check if the config is valid
+// Validate checks if the config is valid.
 func (c Config) Validate() error {
 	if c.PIHoleProtocol != "http" && c.PIHoleProtocol != "https" {
-		return fmt.Errorf("protocol %s is invalid. Must be http or https", c.PIHoleProtocol)
+		return fmt.Errorf("invalid protocol %s: must be http or https", c.PIHoleProtocol)
 	}
 	return nil
 }
@@ -117,19 +119,19 @@ func (c EnvConfig) Split() ([]Config, error) {
 		} else if len(c.PIHolePort) == hostsCount {
 			config.PIHolePort = c.PIHolePort[i]
 		} else if len(c.PIHolePort) != 0 {
-			return nil, errors.New("Wrong number of ports. Port can be empty to use default, one value to use for all hosts, or match the number of hosts")
+			return nil, fmt.Errorf("wrong number of ports: must be empty, single value or one per host")
 		}
 
 		if hasData, data, isValid := extractStringConfig(c.PIHoleProtocol, i, hostsCount); hasData {
 			config.PIHoleProtocol = data
 		} else if !isValid {
-			return nil, errors.New("Wrong number of PIHoleProtocol. PIHoleProtocol can be empty to use default, one value to use for all hosts, or match the number of hosts")
+			return nil, fmt.Errorf("wrong number of PIHoleProtocol: must be empty, single value or one per host")
 		}
 
 		if hasData, data, isValid := extractStringConfig(c.PIHolePassword, i, hostsCount); hasData {
 			config.PIHolePassword = data
 		} else if !isValid {
-			return nil, errors.New("Wrong number of PIHolePassword. PIHolePassword can be empty to use default, one value to use for all hosts, or match the number of hosts")
+			return nil, fmt.Errorf("wrong number of PIHolePassword: must be empty, single value or one per host")
 		}
 
 		result = append(result, config)
@@ -157,29 +159,20 @@ func extractStringConfig(data []string, idx int, hostsCount int) (bool, string, 
 	return false, "", true
 }
 
-func removeEmptyString(source []string) []string {
-	var result []string
-	for _, s := range source {
-		if s != "" {
-			result = append(result, s)
-		}
-	}
-	return result
-}
-
 func (c EnvConfig) show() {
 	val := reflect.ValueOf(&c).Elem()
-	log.Info("------------------------------------")
-	log.Info("-  Pi-hole exporter configuration  -")
-	log.Info("------------------------------------")
-	log.Info("Go version: ", runtime.Version())
-	for i := 0; i < val.NumField(); i++ {
+	log.Debug("------------------------------------")
+	log.Debug("-  Pi-hole exporter configuration  -")
+	log.Debug("------------------------------------")
+	log.Debug("Go version: ", runtime.Version())
+
+	for i := range make([]struct{}, val.NumField()) {
 		valueField := val.Field(i)
 		typeField := val.Type().Field(i)
 
-		// Do not print password or api token but do print the authentication method
+		// Do not print password but keep authentication method visibility
 		if typeField.Name != "PIHolePassword" {
-			log.Info(fmt.Sprintf("%s : %v", typeField.Name, valueField.Interface()))
+			log.Debugf("%s : %v", typeField.Name, valueField.Interface())
 		} else {
 			showAuthenticationMethod(typeField.Name, valueField.Len())
 		}
@@ -189,6 +182,6 @@ func (c EnvConfig) show() {
 
 func showAuthenticationMethod(name string, length int) {
 	if length > 0 {
-		log.Info(fmt.Sprintf("Pi-hole Authentication Method : %s", name))
+		log.Debugf("Pi-hole Authentication Method: %s", name)
 	}
 }

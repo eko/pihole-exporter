@@ -2,12 +2,15 @@ package pihole
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"sync"
 	"time"
+
+	"crypto/tls"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -29,14 +32,16 @@ type authResponse struct {
 	} `json:"session"`
 }
 
-// NewAPIClient initializes and returns a new APIClient with optional TLS verification disabling.
-func NewAPIClient(baseURL string, password string, timeout time.Duration, disableTLSVerification bool) *APIClient {
-	tlsConfig := &tls.Config{
-		InsecureSkipVerify: disableTLSVerification,
-	}
-	
+const (
+	MaxResponseSize = 1 * 1024 * 1024 // 1MB (for DoS protection)
+)
+
+// NewAPIClient initializes and returns a new APIClient.
+func NewAPIClient(baseURL string, password string, timeout time.Duration, skipTLSVerification bool) *APIClient {
 	transport := &http.Transport{
-		TLSClientConfig: tlsConfig,
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: skipTLSVerification,
+		},
 	}
 
 	return &APIClient{
@@ -56,22 +61,29 @@ func (c *APIClient) Authenticate() error {
 
 	url := fmt.Sprintf("%s/api/auth", c.BaseURL)
 	payload := map[string]string{"password": c.password}
-	jsonPayload, _ := json.Marshal(payload)
+	jsonPayload, err := json.Marshal(payload)
+	if err != nil {
+		return fmt.Errorf("failed to marshal authentication payload: %w", err)
+	}
 
-	log.Info("Authenticating", url)
+	log.Debugf("Authenticating to %s", c.BaseURL)
 
 	resp, err := c.Client.Post(url, "application/json", bytes.NewBuffer(jsonPayload))
 	if err != nil {
-		log.Error("Authentication failed", err)
+		log.Errorf("Authentication request failed: %v", err)
 		return fmt.Errorf("authentication request failed: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			log.Warnf("Failed to close response body: %v", err)
+		}
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("authentication failed, status code: %d", resp.StatusCode)
 	}
 
-	body, err := io.ReadAll(resp.Body)
+	body, err := io.ReadAll(io.LimitReader(resp.Body, MaxResponseSize)) // Prevent
 	if err != nil {
 		return fmt.Errorf("failed to read authentication response: %w", err)
 	}
@@ -87,19 +99,22 @@ func (c *APIClient) Authenticate() error {
 
 	c.sessionID = authResp.Session.SID
 	c.validity = time.Now().Add(time.Duration(authResp.Session.Validity) * time.Second)
-	log.Info("Authentication successful", c.sessionID)
+	log.Debugf("Authentication successful")
 	return nil
 }
 
 // ensureAuth ensures the session is valid before making a request.
 func (c *APIClient) ensureAuth() error {
 	c.mu.Lock()
-	if time.Now().After(c.validity) {
-		log.Info("Session expired, re-authenticating")
-		c.mu.Unlock()
+	// Check if authentication is needed
+	needsAuth := time.Now().After(c.validity)
+	// Always unlock the mutex before calling Authenticate
+	c.mu.Unlock()
+
+	if needsAuth {
+		log.Debug("Session expired, re-authenticating")
 		return c.Authenticate()
 	}
-	c.mu.Unlock()
 	return nil
 }
 
@@ -110,25 +125,36 @@ func (c *APIClient) FetchData(endpoint string, result interface{}) error {
 	}
 
 	url := fmt.Sprintf("%s%s", c.BaseURL, endpoint)
-	log.Info("Fetching data", url)
+	log.Debugf("Fetching data from %s\n", url)
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}
+
+	// Add security headers
 	req.Header.Set("X-FTL-SID", c.sessionID)
+	req.Header.Set("X-Content-Type-Options", "nosniff")
+
+	ctx, cancel := context.WithTimeout(context.Background(), c.Client.Timeout)
+	defer cancel()
+	req = req.WithContext(ctx)
 
 	resp, err := c.Client.Do(req)
 	if err != nil {
 		return fmt.Errorf("failed to fetch data from %s: %w", url, err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			log.Warnf("Failed to close response body: %v", err)
+		}
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("non-200 status code: %d", resp.StatusCode)
 	}
 
-	body, err := io.ReadAll(resp.Body)
+	body, err := io.ReadAll(io.LimitReader(resp.Body, MaxResponseSize)) // prevent reading too much data
 	if err != nil {
 		return fmt.Errorf("failed to read response body: %w", err)
 	}
@@ -137,6 +163,14 @@ func (c *APIClient) FetchData(endpoint string, result interface{}) error {
 		return fmt.Errorf("failed to parse JSON response: %w", err)
 	}
 
-	log.Info("Successfully fetched data", url)
+	log.Debugf("Successfully fetched data from endpoint: %s\n", endpoint)
 	return nil
+}
+
+// Close cleans up resources used by the API client
+func (c *APIClient) Close() {
+	// Close the transport to ensure no connection leaks
+	if transport, ok := c.Client.Transport.(*http.Transport); ok {
+		transport.CloseIdleConnections()
+	}
 }

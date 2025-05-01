@@ -61,7 +61,7 @@ func NewClient(config *config.Config, envConfig *config.EnvConfig) *Client {
 		log.Fatalf("err: couldn't validate passed Config: %v", err)
 	}
 
-	log.Printf("Creating client with config %+v\n", config)
+	log.Debugf("Creating client with config %+v", config)
 
 	return &Client{
 		config:    config,
@@ -75,11 +75,11 @@ func (c *Client) String() string {
 }
 
 func (c *Client) CollectMetricsAsync(writer http.ResponseWriter, request *http.Request) {
-	log.Printf("Collecting from %s", c.config.PIHoleHostname)
+	log.Debugf("Collecting from %s", c.config.PIHoleHostname)
 	if stats, blockedDomains, permittedDomains, clients, upstreams, piHoleStatus, err := c.getStatistics(); err == nil {
 		c.setMetrics(stats, blockedDomains, permittedDomains, clients, upstreams, piHoleStatus)
 		c.Status <- &ClientChannel{Status: MetricsCollectionSuccess, Err: nil}
-		log.Printf("New tick of statistics from %s: %s", c.config.PIHoleHostname, stats)
+		log.Debugf("New tick of statistics from %s: %s", c.config.PIHoleHostname, stats)
 	} else {
 		c.Status <- &ClientChannel{Status: MetricsCollectionError, Err: err}
 	}
@@ -91,7 +91,7 @@ func (c *Client) CollectMetrics(writer http.ResponseWriter, request *http.Reques
 		return err
 	}
 	c.setMetrics(stats, blockedDomains, permittedDomains, clients, upstreams, piHoleStatus)
-	log.Printf("New tick of statistics from %s: %s", c.config.PIHoleHostname, stats)
+	log.Debugf("New tick of statistics from %s: %s", c.config.PIHoleHostname, stats)
 	return nil
 }
 
@@ -200,4 +200,18 @@ func (c *Client) getStatistics() (*StatsSummary, *TopDomains, *TopDomains, *[]Pi
 	}
 
 	return &statsSummary, &blockedDomains, &permittedDomains, &clients, &upstreams, &piHoleStatus, nil
+}
+
+// Close cleans up resources used by the client
+func (c *Client) Close() {
+	// Drain the status channel if needed
+	select {
+	case <-c.Status:
+		// Channel had something, now it's drained
+	default:
+		// Channel was already empty
+	}
+
+	log.Debugf("Closing client %s", c.config.PIHoleHostname)
+	c.apiClient.Close() // Close the API client
 }
