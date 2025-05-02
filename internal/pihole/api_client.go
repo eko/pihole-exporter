@@ -111,6 +111,8 @@ func (c *APIClient) ensureAuth() error {
 	// Always unlock the mutex before calling Authenticate
 	c.mu.Unlock()
 
+	// NOTE! Authenticate() already acquires c.mu internally.
+	// introducing locking here (even RWMutex) would cause a deadlock.
 	if needsAuth {
 		log.Debug("Session expired, re-authenticating")
 		return c.Authenticate()
@@ -125,7 +127,7 @@ func (c *APIClient) FetchData(endpoint string, result interface{}) error {
 	}
 
 	url := fmt.Sprintf("%s%s", c.BaseURL, endpoint)
-	log.Debugf("Fetching data from %s\n", url)
+	log.Debugf("Fetching data from %s", url)
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -163,7 +165,7 @@ func (c *APIClient) FetchData(endpoint string, result interface{}) error {
 		return fmt.Errorf("failed to parse JSON response: %w", err)
 	}
 
-	log.Debugf("Successfully fetched data from endpoint: %s\n", endpoint)
+	log.Debugf("Successfully fetched data from endpoint: %s", endpoint)
 	return nil
 }
 
