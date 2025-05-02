@@ -7,21 +7,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const (
-	PIHOLE_HOSTNAME      = "PIHOLE_HOSTNAME"
-	PIHOLE_PORT          = "PIHOLE_PORT"
-	PIHOLE_ADMIN_CONTEXT = "PIHOLE_ADMIN_CONTEXT"
-	PIHOLE_PASSWORD      = "PIHOLE_PASSWORD"
-	PIHOLE_PROTOCOL      = "PIHOLE_PROTOCOL"
-)
-
-type EnvInitiazlier func(*testing.T)
-
-type TestCase struct {
-	Name        string
-	Initializer EnvInitiazlier
-}
-
 func TestSplitDefault(t *testing.T) {
 	assert := assert.New(t)
 

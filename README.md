@@ -143,6 +143,14 @@ $ API_TOKEN=$(awk -F= -v key="WEBPASSWORD" '$1==key {print $2}' /etc/pihole/setu
 $ ./pihole_exporter -pihole_hostname 192.168.1.10 -pihole_password $API_TOKEN
 ```
 
+#### Debug logging
+
+You can enable verbose output either by environment variable or CLI flag:
+
+Both options set logrus to `debug` level (shown below); otherwise the exporter logs at `info`.
+
+___
+
 ```bash
 2019/05/09 20:19:52 ------------------------------------
 2019/05/09 20:19:52 -  Pi-hole exporter configuration  -
@@ -172,7 +180,7 @@ $ ./pihole_exporter -pihole_hostname 192.168.1.10 -pihole_password $API_TOKEN
 2019/05/09 20:19:52 New Prometheus metric registered: queries_last_10min
 2019/05/09 20:19:52 New Prometheus metric registered: ads_last_10min
 2019/05/09 20:19:52 Starting HTTP server
-2019/05/09 20:19:54 New tick of statistics: 648 ads blocked / 66796 total DNS querie
+2019/05/09 20:19:54 New tick of statistics: 648 ads blocked / 66796 total DNS queries
 ...
 ```
 
@@ -208,7 +216,21 @@ scrape_configs:
 
 # Port to be used for the exporter
   -port string (optional) (default "9617")
+
+# Disabling TLS verification
+  disabling TLS verification accepts any certificate 
+    and skips hostname checks - 
+    do NOT use on untrusted networks!!
+
+  -skip_tls_verification true
+
+# Enable debug (verbose) output
+  -debug
 ```
+
+
+
+
 
 ## Available Prometheus metrics
 
