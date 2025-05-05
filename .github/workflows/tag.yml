@@ -6,28 +6,21 @@ on:
       - "*"
 
 env:
-  GO_VERSION_TAG_YAML: "1.24.1"
+  GO_VERSION: "1.24.1"
 
 jobs:
-  build-test:
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: ${{ env.GO_VERSION_TAG_YAML }}
-      - name: Cache Go modules
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          go-version: ${{ env.GO_VERSION }}
       - run: go test -v -race ./...
 
   docker-build:
     runs-on: ubuntu-latest
-    needs: build-test
+    needs: test
     steps:
       - uses: actions/checkout@v4
       - uses: azure/docker-login@v1
@@ -38,19 +31,19 @@ jobs:
         with:
           buildx-version: latest
           qemu-version: latest
-      - name: Get the version
-        id: get_version
+      - name: Get version
+        id: version
         run: echo "TAG_NAME=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-      - name: Build and push
+      - name: Build & push Docker images
         run: |
           docker buildx build \
             --platform linux/386,linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64 \
             --output=type=registry,push=true \
-            --tag ekofr/pihole-exporter:${{ steps.get_version.outputs.TAG_NAME }} .
+            --tag ekofr/pihole-exporter:${{ steps.version.outputs.TAG_NAME }} .
 
   release:
     runs-on: ubuntu-latest
-    needs: build-test
+    needs: test
     outputs:
       upload_url: ${{ steps.create.outputs.upload_url }}
     steps:
@@ -66,53 +59,72 @@ jobs:
           prerelease: false
 
   upload-binaries:
-    needs: [release]
+    needs: release
     strategy:
       matrix:
         include:
           - os: ubuntu-latest
             goos: linux
+            goarch: 386
+          - os: ubuntu-latest
+            goos: linux
             goarch: amd64
+          - os: ubuntu-latest
+            goos: linux
+            goarch: arm
+          - os: macos-latest
+            goos: darwin
+            goarch: amd64
+          - os: macos-latest
+            goos: darwin
+            goarch: arm64
+          - os: ubuntu-latest
+            goos: windows
+            goarch: 386
+            extension: ".exe"
           - os: ubuntu-latest
             goos: windows
             goarch: amd64
             extension: ".exe"
-          - os: macos-latest
-            goos: darwin
-            goarch: arm64
     runs-on: ${{ matrix.os }}
+    env:
+      EXT: ${{ matrix.extension }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: ${{ env.GO_VERSION_TAG_YAML }}
+          go-version: ${{ env.GO_VERSION }}
+
       - name: Build binary
         run: |
-          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -ldflags "-s -w" \
-            -o pihole_exporter-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.extension }} ./
-      - name: Generate checksum
+          export FILENAME=pihole_exporter-${{ matrix.goos }}-${{ matrix.goarch }}${{ env.EXT }}
+          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -ldflags="-s -w" -o $FILENAME .
+
+      - name: Generate SHA256
         run: |
-          FILE=pihole_exporter-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.extension }}
-          if command -v sha256sum >/dev/null; then
+          FILE=pihole_exporter-${{ matrix.goos }}-${{ matrix.goarch }}${{ env.EXT }}
+          if command -v sha256sum &>/dev/null; then
             sha256sum "$FILE" > "$FILE.sha256.txt"
           else
             shasum -a 256 "$FILE" > "$FILE.sha256.txt"
           fi
+
       - name: Upload binary
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
-          asset_path: ./pihole_exporter-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.extension }}
-          asset_name: pihole_exporter-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.extension }}
+          asset_path: ./pihole_exporter-${{ matrix.goos }}-${{ matrix.goarch }}${{ env.EXT }}
+          asset_name: pihole_exporter-${{ matrix.goos }}-${{ matrix.goarch }}${{ env.EXT }}
           asset_content_type: application/octet-stream
+
       - name: Upload checksum
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
-          asset_path: ./pihole_exporter-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.extension }}.sha256.txt
-          asset_name: pihole_exporter-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.extension }}.sha256.txt
+          asset_path: ./pihole_exporter-${{ matrix.goos }}-${{ matrix.goarch }}${{ env.EXT }}.sha256.txt
+          asset_name: pihole_exporter-${{ matrix.goos }}-${{ matrix.goarch }}${{ env.EXT }}.sha256.txt
           asset_content_type: text/plain
