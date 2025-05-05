@@ -38,6 +38,10 @@ type EnvConfig struct {
 	SkipTLSVerification bool          `config:"skip_tls_verification"`
 }
 
+const (
+	DefaultTimeout = 5 * time.Second
+)
+
 func getDefaultEnvConfig() *EnvConfig {
 	return &EnvConfig{
 		PIHoleProtocol:      []string{"http"},
@@ -46,7 +50,7 @@ func getDefaultEnvConfig() *EnvConfig {
 		PIHolePassword:      []string{},
 		BindAddr:            "0.0.0.0",
 		Port:                9617,
-		Timeout:             5 * time.Second,
+		Timeout:            DefaultTimeout,
 		SkipTLSVerification: false,
 	}
 }
@@ -78,14 +82,13 @@ func Load() (*EnvConfig, []Config, error) {
 // String implements fmt.Stringer with a modern strings.Builder implementation.
 func (c *Config) String() string {
 	var b strings.Builder
-	b.WriteString(fmt.Sprintf("<Config@%X ", &c))
-
+	b.WriteString(fmt.Sprintf("<Config@%X ", c))
 	ref := reflect.ValueOf(c).Elem()
 	for i := 0; i < ref.NumField(); i++ {
 		tf := ref.Type().Field(i)
 		vf := ref.Field(i)
 		if tf.Name == "PIHolePassword" {
-			if vf.Len() > 0 {
+			if vf.Kind() == reflect.String && vf.Len() > 0 {
 				b.WriteString("PIHolePassword=*****,")
 			}
 			continue
@@ -177,7 +180,7 @@ func (c EnvConfig) show() {
 			showAuthenticationMethod(typeField.Name, valueField.Len())
 		}
 	}
-	log.Info("------------------------------------")
+	log.Debug("------------------------------------")
 }
 
 func showAuthenticationMethod(name string, length int) {
