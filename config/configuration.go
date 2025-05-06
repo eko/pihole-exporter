@@ -82,7 +82,7 @@ func Load() (*EnvConfig, []Config, error) {
 // String implements fmt.Stringer with a modern strings.Builder implementation.
 func (c *Config) String() string {
 	var b strings.Builder
-	b.WriteString(fmt.Sprintf("<Config@%X ", c))
+	b.WriteString(fmt.Sprintf("<Config@%p ", c))
 	ref := reflect.ValueOf(c).Elem()
 	for i := 0; i < ref.NumField(); i++ {
 		tf := ref.Type().Field(i)
