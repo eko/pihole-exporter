@@ -18,13 +18,10 @@ import (
 
 // Config is the exporter CLI configuration.
 type Config struct {
-	PIHoleProtocol      string `config:"pihole_protocol"`
-	PIHoleHostname      string `config:"pihole_hostname"`
-	PIHolePort          uint16 `config:"pihole_port"`
-	PIHolePassword      string `config:"pihole_password"`
-	BindAddr            string `config:"bind_addr"`
-	Port                uint16 `config:"port"`
-	SkipTLSVerification bool   `config:"skip_tls_verification"`
+	PIHoleProtocol string `config:"pihole_protocol"`
+	PIHoleHostname string `config:"pihole_hostname"`
+	PIHolePort     uint16 `config:"pihole_port"`
+	PIHolePassword string `config:"pihole_password"`
 }
 
 type EnvConfig struct {
@@ -36,6 +33,7 @@ type EnvConfig struct {
 	Port                uint16        `config:"port"`
 	Timeout             time.Duration `config:"timeout"`
 	SkipTLSVerification bool          `config:"skip_tls_verification"`
+	Debug               bool          `config:"debug"`
 }
 
 const (
@@ -50,8 +48,9 @@ func getDefaultEnvConfig() *EnvConfig {
 		PIHolePassword:      []string{},
 		BindAddr:            "0.0.0.0",
 		Port:                9617,
-		Timeout:            DefaultTimeout,
+		Timeout:             DefaultTimeout,
 		SkipTLSVerification: false,
+		Debug:               false,
 	}
 }
 
