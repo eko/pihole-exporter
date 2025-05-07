@@ -2,10 +2,7 @@ package main
 
 import (
 	"errors"
-	"flag"
 	"net/http"
-	"os"
-	"strings"
 
 	log "github.com/sirupsen/logrus"
 
@@ -16,21 +13,14 @@ import (
 	"github.com/xonvanetta/shutdown/pkg/shutdown"
 )
 
-var (
-	debugFlag = flag.Bool("debug", false, "enable debug logging")
-)
-
 func main() {
-	flag.Parse()
-
-	debugEnv := strings.ToLower(os.Getenv("DEBUG"))
-	debug := *debugFlag || debugEnv == "true" || debugEnv == "1"
-
-	configureLogger(debug)
-
+	log.SetFormatter(&log.TextFormatter{FullTimestamp: true})
 	envConf, clientConfigs, err := config.Load()
 	if err != nil {
 		log.Fatalf("failed to load configuration: %v", err)
+	}
+	if envConf.Debug {
+		log.SetLevel(log.DebugLevel)
 	}
 
 	log.Infof("starting pihole-exporter")
@@ -58,16 +48,6 @@ func main() {
 	}
 
 	log.Info("pihole-exporter HTTP server stopped")
-}
-
-// configureLogger sets the global logrus level and formatter.
-func configureLogger(debug bool) {
-	if debug {
-		log.SetLevel(log.DebugLevel)
-	} else {
-		log.SetLevel(log.InfoLevel)
-	}
-	log.SetFormatter(&log.TextFormatter{FullTimestamp: true})
 }
 
 // buildClients constructs a slice of Pi‑hole API clients from configuration.
