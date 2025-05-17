@@ -61,11 +61,11 @@ func NewClient(config *config.Config, envConfig *config.EnvConfig) *Client {
 		log.Fatalf("err: couldn't validate passed Config: %v", err)
 	}
 
-	log.Debugf("Creating client with config %+v", config)
+	log.Debugf("Creating client for host %s with protocol %s and port %d", config.PIHoleHostname, config.PIHoleProtocol, config.PIHolePort)
 
 	return &Client{
 		config:    config,
-		apiClient: *NewAPIClient(fmt.Sprintf("%s://%s:%d", config.PIHoleProtocol, config.PIHoleHostname, config.PIHolePort), config.PIHolePassword, envConfig.Timeout, config.SkipTLSVerification),
+		apiClient: *NewAPIClient(fmt.Sprintf("%s://%s:%d", config.PIHoleProtocol, config.PIHoleHostname, config.PIHolePort), config.PIHolePassword, envConfig.Timeout, envConfig.SkipTLSVerification),
 		Status:    make(chan *ClientChannel, 1),
 	}
 }
