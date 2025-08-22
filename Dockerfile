@@ -17,6 +17,7 @@ FROM $IMAGE
 LABEL name="pihole-exporter"
 
 WORKDIR /root/
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY --from=builder /go/src/github.com/eko/pihole-exporter/binary pihole-exporter
 
 CMD ["./pihole-exporter"]
