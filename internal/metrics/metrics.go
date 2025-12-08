@@ -12,7 +12,7 @@ var (
 			Namespace: "pihole",
 			Help:      "This represent the number of queries made over the defined window",
 		},
-		[]string{"hostname", "type", "timestamp"},
+		[]string{"hostname", "type"},
 	)
 
 	// DomainsBlocked - The number of domains being blocked by Pi-hole.

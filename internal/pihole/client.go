@@ -106,10 +106,10 @@ func (c *Client) setMetrics(queryHistoryResponse *QueryHistoryResponse, stats *S
 
 	for _, entry := range queryHistoryResponse.History {
 		if entry.Timestamp == boundary {
-			metrics.WindowQueries.WithLabelValues(c.config.PIHoleHostname, "total", fmt.Sprintf("%d", entry.Timestamp)).Set(float64(entry.Total))
-			metrics.WindowQueries.WithLabelValues(c.config.PIHoleHostname, "blocked", fmt.Sprintf("%d", entry.Timestamp)).Set(float64(entry.Blocked))
-			metrics.WindowQueries.WithLabelValues(c.config.PIHoleHostname, "cached", fmt.Sprintf("%d", entry.Timestamp)).Set(float64(entry.Cached))
-			metrics.WindowQueries.WithLabelValues(c.config.PIHoleHostname, "forwarded", fmt.Sprintf("%d", entry.Timestamp)).Set(float64(entry.Forwarded))
+			// metrics.WindowQueries.WithLabelValues(c.config.PIHoleHostname, "total")
+			metrics.WindowQueries.WithLabelValues(c.config.PIHoleHostname, "blocked")
+			metrics.WindowQueries.WithLabelValues(c.config.PIHoleHostname, "cached")
+			metrics.WindowQueries.WithLabelValues(c.config.PIHoleHostname, "forwarded")
 			break
 		}
 	}
