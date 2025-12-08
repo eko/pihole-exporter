@@ -34,6 +34,8 @@ func NewServer(addr string, port uint16, clients []*pihole.Client) *Server {
 	mux.HandleFunc("/metrics", func(writer http.ResponseWriter, request *http.Request) {
 		log.Debugf("request.Header: %+v\n", request.Header)
 
+		// Track start time
+		startTime := time.Now()
 		// Use a WaitGroup to track goroutines
 		var wg sync.WaitGroup
 		// Create a context with timeout for metrics collection
@@ -88,6 +90,10 @@ func NewServer(addr string, port uint16, clients []*pihole.Client) *Server {
 			}
 		}
 
+		// Track end time and print total time taken
+		endTime := time.Now()
+		totalTime := endTime.Sub(startTime)
+		log.Infof("Total time taken for metrics collection: %s", totalTime)
 		promhttp.Handler().ServeHTTP(writer, request)
 	})
 
