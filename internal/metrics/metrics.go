@@ -6,11 +6,11 @@ import (
 )
 
 var (
-	WindowQueries = prometheus.NewGaugeVec(
+	Queries = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Name:      "window_queries",
+			Name:      "queries_total",
 			Namespace: "pihole",
-			Help:      "This represent the number of queries made over the defined window",
+			Help:      "This represent the total number of queries",
 		},
 		[]string{"hostname", "type"},
 	)
@@ -216,7 +216,7 @@ var (
 
 // Init initializes all Prometheus metrics made available by Pi-hole exporter.
 func Init() {
-	initMetric("window_queries", WindowQueries)
+	initMetric("queries_total", Queries)
 	initMetric("domains_blocked", DomainsBlocked)
 	initMetric("dns_queries_today", DNSQueriesToday)
 	initMetric("ads_blocked_today", AdsBlockedToday)

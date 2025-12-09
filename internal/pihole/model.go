@@ -4,11 +4,11 @@ import "fmt"
 
 // QueryHistoryEntry represents a single entry in the query history.
 type QueryHistoryEntry struct {
-	Timestamp int64 `json:"timestamp"`
-	Total     int   `json:"total"`
-	Cached    int   `json:"cached"`
-	Blocked   int   `json:"blocked"`
-	Forwarded int   `json:"forwarded"`
+	Timestamp int64   `json:"timestamp"`
+	Total     float64 `json:"total"`
+	Cached    float64 `json:"cached"`
+	Blocked   float64 `json:"blocked"`
+	Forwarded float64 `json:"forwarded"`
 }
 
 // QueryHistoryResponse represents the response containing query history and processing time.

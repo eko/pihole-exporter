@@ -101,18 +101,39 @@ func (c *Client) GetHostname() string {
 }
 
 func (c *Client) setMetrics(queryHistoryResponse *QueryHistoryResponse, stats *StatsSummary, blockedDomains *TopDomains, permittedDomains *TopDomains, clients *[]PiHoleClient, upstreams *Upstreams, piHoleStatus *BlockingStatus) {
-	now := time.Now().Unix()
-	boundary := (now - (now % 300)) - 300
 
-	for _, entry := range queryHistoryResponse.History {
-		if entry.Timestamp == boundary {
-			// metrics.WindowQueries.WithLabelValues(c.config.PIHoleHostname, "total")
-			metrics.WindowQueries.WithLabelValues(c.config.PIHoleHostname, "blocked")
-			metrics.WindowQueries.WithLabelValues(c.config.PIHoleHostname, "cached")
-			metrics.WindowQueries.WithLabelValues(c.config.PIHoleHostname, "forwarded")
-			break
+	// go thru each entry in queryHistoryResponse.History and add the metrics.
+	lastQuery := getLastQueryEntry()
+	total := lastQuery.Total
+	cached := lastQuery.Cached
+	blocked := lastQuery.Blocked
+	forwarded := lastQuery.Forwarded
+
+	// if response history is empty, we skip processing
+	if len(queryHistoryResponse.History) > 0 {
+		for _, entry := range queryHistoryResponse.History {
+			total += float64(entry.Total)
+			cached += float64(entry.Cached)
+			blocked += float64(entry.Blocked)
+			forwarded += float64(entry.Forwarded)
+			log.Infof("Values - Total: %.0f, Cached: %.0f, Blocked: %.0f, Forwarded: %.0f", entry.Total, entry.Cached, entry.Blocked, entry.Forwarded)
 		}
+
+		// Update last query metrics
+		lastQuery.Timestamp = time.Now().Unix() - 60
+		lastQuery.Total = total
+		lastQuery.Cached = cached
+		lastQuery.Blocked = blocked
+		lastQuery.Forwarded = forwarded
+		setLastQueryEntry(lastQuery)
 	}
+
+	log.Infof("Window Queries - Total: %.0f, Cached: %.0f, Blocked: %.0f, Forwarded: %.0f", total, cached, blocked, forwarded)
+
+	// metrics.Queries.WithLabelValues(c.config.PIHoleHostname, "total").Set(float64(entry.Total))
+	metrics.Queries.WithLabelValues(c.config.PIHoleHostname, "blocked").Set(float64(blocked))
+	metrics.Queries.WithLabelValues(c.config.PIHoleHostname, "cached").Set(float64(cached))
+	metrics.Queries.WithLabelValues(c.config.PIHoleHostname, "forwarded").Set(float64(total - cached - blocked))
 
 	metrics.DomainsBlocked.WithLabelValues(c.config.PIHoleHostname).Set(float64(stats.Gravity.DomainsBeingBlocked))
 	metrics.DNSQueriesToday.WithLabelValues(c.config.PIHoleHostname).Set(float64(stats.Queries.Total))
@@ -179,7 +200,12 @@ func (c *Client) getStatistics() (*QueryHistoryResponse, *StatsSummary, *TopDoma
 	var upstreams Upstreams
 	var piHoleStatus BlockingStatus
 
-	err := c.apiClient.FetchData("/api/history", &queryHistoryResponse)
+	// Read LAST_QUERY_DATA env variable using helper
+	// run one minute back in time
+	now := time.Now().Unix() - 60
+	lastQuery := getLastQueryEntry()
+	log.Infof("URL = /api/history/database?from=%d&until=%d", lastQuery.Timestamp, now)
+	err := c.apiClient.FetchData(fmt.Sprintf("/api/history/database?from=%d&until=%d", lastQuery.Timestamp, now), &queryHistoryResponse)
 	if err != nil {
 		return nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error fetching query history: %w", err)
 	}
