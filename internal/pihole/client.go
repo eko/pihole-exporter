@@ -103,7 +103,7 @@ func (c *Client) GetHostname() string {
 func (c *Client) setMetrics(queryHistoryResponse *QueryHistoryResponse, stats *StatsSummary, blockedDomains *TopDomains, permittedDomains *TopDomains, clients *[]PiHoleClient, upstreams *Upstreams, piHoleStatus *BlockingStatus) {
 
 	// go thru each entry in queryHistoryResponse.History and add the metrics.
-	lastQuery := getLastQueryEntry()
+	lastQuery := getLastQueryEntry(c.config.PIHoleHostname)
 	total := lastQuery.Total
 	cached := lastQuery.Cached
 	blocked := lastQuery.Blocked
@@ -125,7 +125,7 @@ func (c *Client) setMetrics(queryHistoryResponse *QueryHistoryResponse, stats *S
 		lastQuery.Cached = cached
 		lastQuery.Blocked = blocked
 		lastQuery.Forwarded = forwarded
-		setLastQueryEntry(lastQuery)
+		setLastQueryEntry(lastQuery, c.config.PIHoleHostname)
 	}
 
 	log.Infof("Window Queries - Total: %.0f, Cached: %.0f, Blocked: %.0f, Forwarded: %.0f", total, cached, blocked, forwarded)
@@ -203,7 +203,7 @@ func (c *Client) getStatistics() (*QueryHistoryResponse, *StatsSummary, *TopDoma
 	// Read LAST_QUERY_DATA env variable using helper
 	// run one minute back in time
 	now := time.Now().Unix() - 60
-	lastQuery := getLastQueryEntry()
+	lastQuery := getLastQueryEntry(c.config.PIHoleHostname)
 	log.Infof("URL = /api/history/database?from=%d&until=%d", lastQuery.Timestamp, now)
 	err := c.apiClient.FetchData(fmt.Sprintf("/api/history/database?from=%d&until=%d", lastQuery.Timestamp, now), &queryHistoryResponse)
 	if err != nil {

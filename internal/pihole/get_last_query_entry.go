@@ -9,7 +9,7 @@ import (
 )
 
 // getLastQueryEntry reads the LAST_QUERY_DATA env variable and parses it as QueryHistoryEntry, or returns zero value if not set or invalid.
-func getLastQueryEntry() QueryHistoryEntry {
+func getLastQueryEntry(hostname string) QueryHistoryEntry {
 	var lastQuery QueryHistoryEntry
 
 	// run one minute back in time
@@ -22,28 +22,28 @@ func getLastQueryEntry() QueryHistoryEntry {
 		Forwarded: 0,
 	}
 
-	lastQueryStr := os.Getenv("LAST_QUERY_DATA")
+	lastQueryStr := os.Getenv("LAST_QUERY_DATA_" + hostname)
 	if lastQueryStr != "" {
 		if err := json.Unmarshal([]byte(lastQueryStr), &lastQuery); err != nil {
 			log.Infof("Failed to parse LAST_QUERY_DATA: %v", err)
-			setLastQueryEntry(defaultLastQuery)
+			setLastQueryEntry(defaultLastQuery, hostname)
 			return defaultLastQuery
 		}
 		return lastQuery
 	}
-	setLastQueryEntry(defaultLastQuery)
+	setLastQueryEntry(defaultLastQuery, hostname)
 	return defaultLastQuery
 }
 
-func setLastQueryEntry(entry QueryHistoryEntry) {
+func setLastQueryEntry(entry QueryHistoryEntry, hostname string) {
 	entryBytes, err := json.Marshal(entry)
 	if err != nil {
 		log.Infof("Failed to marshal last query entry: %v", err)
 		return
 	}
-	if err := os.Setenv("LAST_QUERY_DATA", string(entryBytes)); err != nil {
+	if err := os.Setenv("LAST_QUERY_DATA_"+hostname, string(entryBytes)); err != nil {
 		log.Infof("Failed to set LAST_QUERY_DATA env variable: %v", err)
 	}
 
-	log.Infof("Last Query Timestamp %d", entry.Timestamp)
+	log.Infof("Last Query Timestamp for hostname %s will be %d", hostname, entry.Timestamp)
 }
