@@ -16,7 +16,7 @@ FROM $IMAGE
 
 LABEL name="pihole-exporter"
 
-WORKDIR /root/
+WORKDIR /app/
 COPY --from=builder /go/src/github.com/eko/pihole-exporter/binary pihole-exporter
 
 USER 65532:65532
