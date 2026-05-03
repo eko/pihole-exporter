@@ -77,6 +77,12 @@ $ docker run \
   ekofr/pihole-exporter:latest
 ```
 
+If you want to skip SSL certificate verification, pass in the following to either your Docker Compose file (-e) or the file holding environment variables (e.g. `.env`):
+
+```text
+SKIP_TLS_VERIFICATION=true
+```
+
 A single instance of pihole-exporter can monitor multiple pi-holes instances.
 To do so, you can specify a list of hostnames, protocols, passwords/API tokens and ports by separating them with commas in their respective environment variable:
 
