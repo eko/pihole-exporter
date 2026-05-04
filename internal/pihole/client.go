@@ -3,6 +3,7 @@ package pihole
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 
@@ -76,8 +77,8 @@ func (c *Client) String() string {
 
 func (c *Client) CollectMetricsAsync(writer http.ResponseWriter, request *http.Request) {
 	log.Debugf("Collecting from %s", c.config.PIHoleHostname)
-	if stats, blockedDomains, permittedDomains, clients, upstreams, piHoleStatus, err := c.getStatistics(); err == nil {
-		c.setMetrics(stats, blockedDomains, permittedDomains, clients, upstreams, piHoleStatus)
+	if queryHistoryResponse, stats, blockedDomains, permittedDomains, clients, upstreams, piHoleStatus, err := c.getStatistics(); err == nil {
+		c.setMetrics(queryHistoryResponse, stats, blockedDomains, permittedDomains, clients, upstreams, piHoleStatus)
 		c.Status <- &ClientChannel{Status: MetricsCollectionSuccess, Err: nil}
 		log.Debugf("New tick of statistics from %s: %s", c.config.PIHoleHostname, stats)
 	} else {
@@ -86,11 +87,11 @@ func (c *Client) CollectMetricsAsync(writer http.ResponseWriter, request *http.R
 }
 
 func (c *Client) CollectMetrics(writer http.ResponseWriter, request *http.Request) error {
-	stats, blockedDomains, permittedDomains, clients, upstreams, piHoleStatus, err := c.getStatistics()
+	queryHistoryResponse, stats, blockedDomains, permittedDomains, clients, upstreams, piHoleStatus, err := c.getStatistics()
 	if err != nil {
 		return err
 	}
-	c.setMetrics(stats, blockedDomains, permittedDomains, clients, upstreams, piHoleStatus)
+	c.setMetrics(queryHistoryResponse, stats, blockedDomains, permittedDomains, clients, upstreams, piHoleStatus)
 	log.Debugf("New tick of statistics from %s: %s", c.config.PIHoleHostname, stats)
 	return nil
 }
@@ -99,7 +100,41 @@ func (c *Client) GetHostname() string {
 	return c.config.PIHoleHostname
 }
 
-func (c *Client) setMetrics(stats *StatsSummary, blockedDomains *TopDomains, permittedDomains *TopDomains, clients *[]PiHoleClient, upstreams *Upstreams, piHoleStatus *BlockingStatus) {
+func (c *Client) setMetrics(queryHistoryResponse *QueryHistoryResponse, stats *StatsSummary, blockedDomains *TopDomains, permittedDomains *TopDomains, clients *[]PiHoleClient, upstreams *Upstreams, piHoleStatus *BlockingStatus) {
+
+	// go thru each entry in queryHistoryResponse.History and add the metrics.
+	lastQuery := getLastQueryEntry(c.config.PIHoleHostname)
+	total := lastQuery.Total
+	cached := lastQuery.Cached
+	blocked := lastQuery.Blocked
+	forwarded := lastQuery.Forwarded
+
+	// if response history is empty, we skip processing
+	if len(queryHistoryResponse.History) > 0 {
+		for _, entry := range queryHistoryResponse.History {
+			total += float64(entry.Total)
+			cached += float64(entry.Cached)
+			blocked += float64(entry.Blocked)
+			forwarded += float64(entry.Forwarded)
+			log.Infof("Values - Total: %.0f, Cached: %.0f, Blocked: %.0f, Forwarded: %.0f", entry.Total, entry.Cached, entry.Blocked, entry.Forwarded)
+		}
+
+		// Update last query metrics
+		lastQuery.Timestamp = time.Now().Unix() - 60
+		lastQuery.Total = total
+		lastQuery.Cached = cached
+		lastQuery.Blocked = blocked
+		lastQuery.Forwarded = forwarded
+		setLastQueryEntry(lastQuery, c.config.PIHoleHostname)
+	}
+
+	log.Infof("Window Queries - Total: %.0f, Cached: %.0f, Blocked: %.0f, Forwarded: %.0f", total, cached, blocked, forwarded)
+
+	// metrics.Queries.WithLabelValues(c.config.PIHoleHostname, "total").Set(float64(entry.Total))
+	metrics.Queries.WithLabelValues(c.config.PIHoleHostname, "blocked").Set(float64(blocked))
+	metrics.Queries.WithLabelValues(c.config.PIHoleHostname, "cached").Set(float64(cached))
+	metrics.Queries.WithLabelValues(c.config.PIHoleHostname, "forwarded").Set(float64(total - cached - blocked))
+
 	metrics.DomainsBlocked.WithLabelValues(c.config.PIHoleHostname).Set(float64(stats.Gravity.DomainsBeingBlocked))
 	metrics.DNSQueriesToday.WithLabelValues(c.config.PIHoleHostname).Set(float64(stats.Queries.Total))
 	metrics.AdsBlockedToday.WithLabelValues(c.config.PIHoleHostname).Set(float64(stats.Queries.Blocked))
@@ -155,7 +190,8 @@ func (c *Client) setMetrics(stats *StatsSummary, blockedDomains *TopDomains, per
 	}
 }
 
-func (c *Client) getStatistics() (*StatsSummary, *TopDomains, *TopDomains, *[]PiHoleClient, *Upstreams, *BlockingStatus, error) {
+func (c *Client) getStatistics() (*QueryHistoryResponse, *StatsSummary, *TopDomains, *TopDomains, *[]PiHoleClient, *Upstreams, *BlockingStatus, error) {
+	var queryHistoryResponse QueryHistoryResponse
 	var statsSummary StatsSummary
 	var permittedDomains TopDomains
 	var blockedDomains TopDomains
@@ -164,42 +200,52 @@ func (c *Client) getStatistics() (*StatsSummary, *TopDomains, *TopDomains, *[]Pi
 	var upstreams Upstreams
 	var piHoleStatus BlockingStatus
 
-	err := c.apiClient.FetchData("/api/stats/summary", &statsSummary)
+	// Read LAST_QUERY_DATA env variable using helper
+	// run one minute back in time
+	now := time.Now().Unix() - 60
+	lastQuery := getLastQueryEntry(c.config.PIHoleHostname)
+	log.Infof("URL = /api/history/database?from=%d&until=%d", lastQuery.Timestamp, now)
+	err := c.apiClient.FetchData(fmt.Sprintf("/api/history/database?from=%d&until=%d", lastQuery.Timestamp, now), &queryHistoryResponse)
 	if err != nil {
-		return nil, nil, nil, nil, nil, nil, fmt.Errorf("error fetching stats summary: %w", err)
+		return nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error fetching query history: %w", err)
+	}
+
+	err = c.apiClient.FetchData("/api/stats/summary", &statsSummary)
+	if err != nil {
+		return nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error fetching stats summary: %w", err)
 	}
 
 	err = c.apiClient.FetchData("/api/stats/top_domains?blocked=true&count=10", &blockedDomains)
 	if err != nil {
-		return nil, nil, nil, nil, nil, nil, fmt.Errorf("error fetching blocked domains: %w", err)
+		return nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error fetching blocked domains: %w", err)
 	}
 	err = c.apiClient.FetchData("/api/stats/top_domains?blocked=false&count=10", &permittedDomains)
 	if err != nil {
-		return nil, nil, nil, nil, nil, nil, fmt.Errorf("error fetching permitted domains: %w", err)
+		return nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error fetching permitted domains: %w", err)
 	}
 
 	err = c.apiClient.FetchData("/api/stats/top_clients?blocked=true&count=10", &blockedClients)
 	if err != nil {
-		return nil, nil, nil, nil, nil, nil, fmt.Errorf("error fetching blocked clients: %w", err)
+		return nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error fetching blocked clients: %w", err)
 	}
 	err = c.apiClient.FetchData("/api/stats/top_clients?blocked=false&count=10", &permittedClients)
 	if err != nil {
-		return nil, nil, nil, nil, nil, nil, fmt.Errorf("error fetching permitted clients: %w", err)
+		return nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error fetching permitted clients: %w", err)
 	}
 
 	clients := MergeClients(permittedClients.Clients, blockedClients.Clients)
 
 	err = c.apiClient.FetchData("/api/stats/upstreams", &upstreams)
 	if err != nil {
-		return nil, nil, nil, nil, nil, nil, fmt.Errorf("error fetching upstream stats: %w", err)
+		return nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error fetching upstream stats: %w", err)
 	}
 
 	err = c.apiClient.FetchData("/api/dns/blocking", &piHoleStatus)
 	if err != nil {
-		return nil, nil, nil, nil, nil, nil, fmt.Errorf("error fetching status: %w", err)
+		return nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error fetching status: %w", err)
 	}
 
-	return &statsSummary, &blockedDomains, &permittedDomains, &clients, &upstreams, &piHoleStatus, nil
+	return &queryHistoryResponse, &statsSummary, &blockedDomains, &permittedDomains, &clients, &upstreams, &piHoleStatus, nil
 }
 
 // Close cleans up resources used by the client

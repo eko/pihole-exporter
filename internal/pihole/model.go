@@ -2,6 +2,21 @@ package pihole
 
 import "fmt"
 
+// QueryHistoryEntry represents a single entry in the query history.
+type QueryHistoryEntry struct {
+	Timestamp int64   `json:"timestamp"`
+	Total     float64 `json:"total"`
+	Cached    float64 `json:"cached"`
+	Blocked   float64 `json:"blocked"`
+	Forwarded float64 `json:"forwarded"`
+}
+
+// QueryHistoryResponse represents the response containing query history and processing time.
+type QueryHistoryResponse struct {
+	History []QueryHistoryEntry `json:"history"`
+	Took    float64             `json:"took"`
+}
+
 type BlockingStatus struct {
 	Blocking string  `json:"blocking"`
 	Timer    int     `json:"timer"`
