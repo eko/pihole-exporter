@@ -66,10 +66,6 @@ func NewServer(addr string, port uint16, clients []*pihole.Client) *Server {
 						Status: pihole.MetricsCollectionTimeout,
 						Err:    fmt.Errorf("metrics collection from %s timed out", c.GetHostname()),
 					}
-					// We need to read from the Status channel to prevent blocking
-					go func() {
-						<-c.Status // Discard the result when it eventually comes
-					}()
 				}
 			}(client)
 		}
