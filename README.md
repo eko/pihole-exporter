@@ -110,6 +110,24 @@ $ docker run \
   ekofr/pihole-exporter:latest
 ```
 
+Instead of putting the password/API token directly in an environment variable, you can point
+`PIHOLE_PASSWORD_FILE` at a file (e.g. a Docker/Kubernetes secret) containing it. `PIHOLE_PASSWORD_FILE`
+follows the same comma-separated rule as `PIHOLE_PASSWORD`: give it a single path to use for every host,
+or one path per host. It cannot be combined with a non-empty `PIHOLE_PASSWORD`. Mount the secret read-only:
+
+```yaml
+services:
+  pihole-exporter:
+    image: ekofr/pihole-exporter:latest
+    environment:
+      PIHOLE_HOSTNAME: 192.168.1.2
+      PIHOLE_PASSWORD_FILE: /run/secrets/pihole_password
+    volumes:
+      - ./secrets/pihole_password.txt:/run/secrets/pihole_password:ro
+    ports:
+      - "9617:9617"
+```
+
 ### From sources
 
 Optionally, you can download and build it from the sources. You have to retrieve the project sources by using one of the following way:

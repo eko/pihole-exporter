@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"reflect"
 	"testing"
 	"time"
@@ -129,6 +130,122 @@ func TestSplitMultipleHostWithMultipleConfigs(t *testing.T) {
 	}
 }
 
+func writePasswordFile(t *testing.T, contents string) string {
+	t.Helper()
+	path := filepath.Join(t.TempDir(), "password")
+	if err := os.WriteFile(path, []byte(contents), 0o600); err != nil {
+		t.Fatalf("failed to write password file fixture: %v", err)
+	}
+	return path
+}
+
+func TestSplitPasswordFileSingleAppliesToAllHosts(t *testing.T) {
+	assert := assert.New(t)
+
+	path := writePasswordFile(t, "sharedsecret\n")
+
+	env := getDefaultEnvConfig()
+	env.PIHoleHostname = []string{"127.0.0.1", "127.0.0.2"}
+	env.PIHolePasswordFile = []string{path}
+
+	clientConfigs, err := env.Split()
+	assert.NoError(err)
+	assert.Len(clientConfigs, 2)
+	assert.Equal("sharedsecret", clientConfigs[0].PIHolePassword)
+	assert.Equal("sharedsecret", clientConfigs[1].PIHolePassword)
+}
+
+func TestSplitPasswordFilePerHost(t *testing.T) {
+	assert := assert.New(t)
+
+	path1 := writePasswordFile(t, "secret1")
+	path2 := writePasswordFile(t, "secret2")
+
+	env := getDefaultEnvConfig()
+	env.PIHoleHostname = []string{"127.0.0.1", "127.0.0.2"}
+	env.PIHolePasswordFile = []string{path1, path2}
+
+	clientConfigs, err := env.Split()
+	assert.NoError(err)
+	assert.Len(clientConfigs, 2)
+	assert.Equal("secret1", clientConfigs[0].PIHolePassword)
+	assert.Equal("secret2", clientConfigs[1].PIHolePassword)
+}
+
+func TestSplitPasswordFileTrimsTrailingWhitespaceOnly(t *testing.T) {
+	assert := assert.New(t)
+
+	path := writePasswordFile(t, "  my secret  \r\n\n")
+
+	env := getDefaultEnvConfig()
+	env.PIHolePasswordFile = []string{path}
+
+	clientConfigs, err := env.Split()
+	assert.NoError(err)
+	assert.Equal("  my secret", clientConfigs[0].PIHolePassword)
+}
+
+func TestSplitPasswordAndPasswordFileBothSetErrors(t *testing.T) {
+	assert := assert.New(t)
+
+	path := writePasswordFile(t, "secret")
+
+	env := getDefaultEnvConfig()
+	env.PIHolePassword = []string{"inlinepassword"}
+	env.PIHolePasswordFile = []string{path}
+
+	_, err := env.Split()
+	assert.Error(err)
+	assert.NotContains(err.Error(), "inlinepassword")
+	assert.NotContains(err.Error(), "secret")
+}
+
+func TestSplitPasswordFileEmptyPathErrors(t *testing.T) {
+	assert := assert.New(t)
+
+	env := getDefaultEnvConfig()
+	env.PIHolePasswordFile = []string{"   "}
+
+	_, err := env.Split()
+	assert.Error(err)
+}
+
+func TestSplitPasswordFileMissingFileErrors(t *testing.T) {
+	assert := assert.New(t)
+
+	env := getDefaultEnvConfig()
+	env.PIHolePasswordFile = []string{filepath.Join(t.TempDir(), "does-not-exist")}
+
+	_, err := env.Split()
+	assert.Error(err)
+}
+
+func TestSplitPasswordFileEmptyContentErrors(t *testing.T) {
+	assert := assert.New(t)
+
+	path := writePasswordFile(t, "   \n\n")
+
+	env := getDefaultEnvConfig()
+	env.PIHolePasswordFile = []string{path}
+
+	_, err := env.Split()
+	assert.Error(err)
+}
+
+func TestSplitPasswordFileWrongCountErrors(t *testing.T) {
+	assert := assert.New(t)
+
+	path1 := writePasswordFile(t, "secret1")
+	path2 := writePasswordFile(t, "secret2")
+
+	env := getDefaultEnvConfig()
+	env.PIHoleHostname = []string{"127.0.0.1", "127.0.0.2", "127.0.0.3"}
+	env.PIHolePasswordFile = []string{path1, path2}
+
+	_, err := env.Split()
+	assert.Error(err)
+}
+
 // Helper function to safely set os.Args for the duration of a test
 func withArgs(args []string, f func()) {
 	originalArgs := os.Args
@@ -175,6 +292,7 @@ func TestZLoadConfigWithFlags(t *testing.T) {
 			PIHoleHostname:      []string{"my.pi.hole"},
 			PIHolePort:          []uint16{443},
 			PIHolePassword:      []string{"secret"},
+			PIHolePasswordFile:  []string{},
 			BindAddr:            "127.0.0.1",
 			Port:                9000,
 			Timeout:             10 * time.Second,
@@ -248,6 +366,7 @@ func TestLoadConfigEnvVars(t *testing.T) {
 		PIHoleHostname:      []string{"env.pi.hole"},
 		PIHolePort:          []uint16{8443},
 		PIHolePassword:      []string{"env_secret"},
+		PIHolePasswordFile:  []string{},
 		BindAddr:            "0.0.0.0",
 		Port:                9001,
 		Timeout:             15 * time.Second,
@@ -289,6 +408,7 @@ func TestLoadConfigDefaults(t *testing.T) {
 		os.Unsetenv("PIHOLE_HOSTNAME")
 		os.Unsetenv("PIHOLE_PORT")
 		os.Unsetenv("PIHOLE_PASSWORD")
+		os.Unsetenv("PIHOLE_PASSWORD_FILE")
 		os.Unsetenv("BIND_ADDR")
 		os.Unsetenv("PORT")
 		os.Unsetenv("TIMEOUT")
@@ -305,6 +425,7 @@ func TestLoadConfigDefaults(t *testing.T) {
 			PIHoleHostname:      []string{"127.0.0.1"},
 			PIHolePort:          []uint16{80},
 			PIHolePassword:      []string{},
+			PIHolePasswordFile:  []string{},
 			BindAddr:            "0.0.0.0",
 			Port:                9617,
 			Timeout:             5 * time.Second,
