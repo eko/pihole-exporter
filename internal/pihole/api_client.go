@@ -16,19 +16,18 @@ import (
 )
 
 type APIClient struct {
-	BaseURL   string
-	Client    *http.Client
-	password  string
-	sessionID string
-	validity  time.Time
-	mu        sync.Mutex
+	BaseURL       string
+	Client        *http.Client
+	password      string
+	sessionID     string
+	authenticated bool
+	mu            sync.Mutex
 }
 
 type authResponse struct {
 	Session struct {
-		Valid    bool   `json:"valid"`
-		SID      string `json:"sid"`
-		Validity int    `json:"validity"`
+		Valid bool   `json:"valid"`
+		SID   string `json:"sid"`
 	} `json:"session"`
 }
 
@@ -54,10 +53,41 @@ func NewAPIClient(baseURL string, password string, timeout time.Duration, skipTL
 	}
 }
 
-// Authenticate logs in and stores the session ID.
-func (c *APIClient) Authenticate() error {
+// session returns the current session ID, authenticating first if there is none yet.
+func (c *APIClient) session() (string, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+
+	if !c.authenticated {
+		if err := c.authenticate(); err != nil {
+			return "", err
+		}
+	}
+	return c.sessionID, nil
+}
+
+// renewSession authenticates again after Pi-hole rejected staleSID. The lock is
+// held during the request so that concurrent callers wait for a single
+// authentication instead of each running the costly Pi-hole password check.
+func (c *APIClient) renewSession(staleSID string) (string, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if c.authenticated && c.sessionID != staleSID {
+		return c.sessionID, nil
+	}
+	if err := c.authenticate(); err != nil {
+		return "", err
+	}
+	return c.sessionID, nil
+}
+
+// authenticate logs in and stores the session ID. c.mu must be held.
+//
+// Pi-hole extends a session each time it is used, so the session is kept
+// until Pi-hole rejects it rather than renewed from its announced validity.
+func (c *APIClient) authenticate() error {
+	c.authenticated = false
 
 	url := fmt.Sprintf("%s/api/auth", c.BaseURL)
 	payload := map[string]string{"password": c.password}
@@ -98,67 +128,39 @@ func (c *APIClient) Authenticate() error {
 	}
 
 	c.sessionID = authResp.Session.SID
-	c.validity = time.Now().Add(time.Duration(authResp.Session.Validity) * time.Second)
+	c.authenticated = true
 	log.Debugf("Authentication successful")
 	return nil
 }
 
-// ensureAuth ensures the session is valid before making a request.
-func (c *APIClient) ensureAuth() error {
-	c.mu.Lock()
-	// Check if authentication is needed
-	needsAuth := time.Now().After(c.validity)
-	// Always unlock the mutex before calling Authenticate
-	c.mu.Unlock()
-
-	// NOTE! Authenticate() already acquires c.mu internally.
-	// introducing locking here (even RWMutex) would cause a deadlock.
-	if needsAuth {
-		log.Debug("Session expired, re-authenticating")
-		return c.Authenticate()
-	}
-	return nil
-}
-
 // FetchData makes a GET request to the specified endpoint and parses the response.
+// When Pi-hole rejects the session, it authenticates again and retries once.
 func (c *APIClient) FetchData(endpoint string, result interface{}) error {
-	if err := c.ensureAuth(); err != nil {
+	sid, err := c.session()
+	if err != nil {
 		return err
 	}
 
 	url := fmt.Sprintf("%s%s", c.BaseURL, endpoint)
 	log.Debugf("Fetching data from %s", url)
 
-	req, err := http.NewRequest("GET", url, nil)
+	statusCode, body, err := c.get(url, sid)
 	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err)
+		return err
 	}
 
-	// Add security headers
-	req.Header.Set("X-FTL-SID", c.sessionID)
-	req.Header.Set("X-Content-Type-Options", "nosniff")
-
-	ctx, cancel := context.WithTimeout(context.Background(), c.Client.Timeout)
-	defer cancel()
-	req = req.WithContext(ctx)
-
-	resp, err := c.Client.Do(req)
-	if err != nil {
-		return fmt.Errorf("failed to fetch data from %s: %w", url, err)
-	}
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			log.Warnf("Failed to close response body: %v", err)
+	if statusCode == http.StatusUnauthorized {
+		log.Debug("Session rejected, re-authenticating")
+		if sid, err = c.renewSession(sid); err != nil {
+			return err
 		}
-	}()
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("non-200 status code: %d", resp.StatusCode)
+		if statusCode, body, err = c.get(url, sid); err != nil {
+			return err
+		}
 	}
 
-	body, err := io.ReadAll(io.LimitReader(resp.Body, MaxResponseSize)) // prevent reading too much data
-	if err != nil {
-		return fmt.Errorf("failed to read response body: %w", err)
+	if statusCode != http.StatusOK {
+		return fmt.Errorf("non-200 status code: %d", statusCode)
 	}
 
 	if err := json.Unmarshal(body, result); err != nil {
@@ -169,8 +171,72 @@ func (c *APIClient) FetchData(endpoint string, result interface{}) error {
 	return nil
 }
 
+// get performs a GET request with the given session ID and returns the status code and body.
+func (c *APIClient) get(url string, sid string) (int, []byte, error) {
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return 0, nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	// Add security headers
+	req.Header.Set("X-FTL-SID", sid)
+	req.Header.Set("X-Content-Type-Options", "nosniff")
+
+	ctx, cancel := context.WithTimeout(context.Background(), c.Client.Timeout)
+	defer cancel()
+	req = req.WithContext(ctx)
+
+	resp, err := c.Client.Do(req)
+	if err != nil {
+		return 0, nil, fmt.Errorf("failed to fetch data from %s: %w", url, err)
+	}
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			log.Warnf("Failed to close response body: %v", err)
+		}
+	}()
+
+	body, err := io.ReadAll(io.LimitReader(resp.Body, MaxResponseSize)) // prevent reading too much data
+	if err != nil {
+		return 0, nil, fmt.Errorf("failed to read response body: %w", err)
+	}
+	return resp.StatusCode, body, nil
+}
+
+// logout ends the current session so it does not hold one of Pi-hole's
+// limited API seats until it expires.
+func (c *APIClient) logout() {
+	c.mu.Lock()
+	sid := c.sessionID
+	c.sessionID = ""
+	c.authenticated = false
+	c.mu.Unlock()
+
+	if sid == "" {
+		return
+	}
+
+	req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s/api/auth", c.BaseURL), nil)
+	if err != nil {
+		log.Warnf("Failed to create logout request: %v", err)
+		return
+	}
+	req.Header.Set("X-FTL-SID", sid)
+
+	resp, err := c.Client.Do(req)
+	if err != nil {
+		log.Warnf("Logout request failed: %v", err)
+		return
+	}
+	if err := resp.Body.Close(); err != nil {
+		log.Warnf("Failed to close response body: %v", err)
+	}
+}
+
 // Close cleans up resources used by the API client
 func (c *APIClient) Close() {
+	c.logout()
+
 	// Close the transport to ensure no connection leaks
 	if transport, ok := c.Client.Transport.(*http.Transport); ok {
 		transport.CloseIdleConnections()
