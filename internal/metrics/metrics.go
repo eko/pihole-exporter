@@ -156,6 +156,16 @@ var (
 		[]string{"hostname", "source", "source_name"},
 	)
 
+	// TopSourcesBlocked - The number of blocked queries made by the top blocked source hosts.
+	TopSourcesBlocked = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name:      "top_sources_blocked",
+			Namespace: "pihole",
+			Help:      "This represent the number of blocked queries made by the top blocked source hosts",
+		},
+		[]string{"hostname", "source", "source_name"},
+	)
+
 	// ForwardDestinations - The number of forward destinations requests made by Pi-hole by destination.
 	ForwardDestinations = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
@@ -221,6 +231,7 @@ func Init() {
 	initMetric("top_queries", TopQueries)
 	initMetric("top_ads", TopAds)
 	initMetric("top_sources", TopSources)
+	initMetric("top_sources_blocked", TopSourcesBlocked)
 	initMetric("forward_destinations", ForwardDestinations)
 	initMetric("destination_responsetime", ForwardDestinationsResponseTime)
 	initMetric("destination_responsevariance", ForwardDestinationsResponseVariance)
