@@ -2,7 +2,7 @@ ARG IMAGE=scratch
 ARG OS=linux
 ARG ARCH=amd64
 
-FROM golang:1.24.5-alpine3.21 as builder
+FROM golang:1.27.3-alpine3.24 AS builder
 
 WORKDIR /go/src/github.com/eko/pihole-exporter
 COPY . .
@@ -16,8 +16,10 @@ FROM $IMAGE
 
 LABEL name="pihole-exporter"
 
-WORKDIR /root/
+WORKDIR /app/
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY --from=builder /go/src/github.com/eko/pihole-exporter/binary pihole-exporter
+
+USER 65532:65532
 
 CMD ["./pihole-exporter"]
