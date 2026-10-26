@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"time"
@@ -8,7 +9,6 @@ import (
 	"github.com/eko/pihole-exporter/internal/pihole"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
-	"golang.org/x/net/context"
 )
 
 // Server is the struct for the HTTP server.
