@@ -216,13 +216,15 @@ scrape_configs:
       static_configs:
           - targets: ["localhost:9617"]
 ```
-If you are using Grafana Alloy, you can add this line on your config.alloy:
-```yaml
-prometheus.scrape "pihole" { 
-  targets    = [ 
-    { "__address__" = "localhost:9167" }, 
-  ] 
-  forward_to = [prometheus.remote_write.metrics1.receiver] 
+
+If you are using [Grafana Alloy](https://grafana.com/docs/alloy/latest/), add a scrape component to your `config.alloy` and forward it to your own `prometheus.remote_write` component:
+
+```alloy
+prometheus.scrape "pihole" {
+  targets    = [
+    {"__address__" = "localhost:9617"},
+  ]
+  forward_to = [prometheus.remote_write.default.receiver]
 }
 ```
 
