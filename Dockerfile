@@ -1,16 +1,21 @@
 ARG IMAGE=scratch
-ARG OS=linux
-ARG ARCH=amd64
 
-FROM golang:1.27.3-alpine3.24 AS builder
+# The builder always runs on the build machine's platform and cross-compiles
+# for the target platform, so multi-arch builds don't need emulation.
+FROM --platform=$BUILDPLATFORM golang:1.27.3-alpine3.24 AS builder
+
+ARG TARGETOS
+ARG TARGETARCH
+ARG TARGETVARIANT
+ARG VERSION=dev
 
 WORKDIR /go/src/github.com/eko/pihole-exporter
+COPY go.mod go.sum ./
+RUN go mod download
 COPY . .
 
-RUN apk --no-cache add git alpine-sdk
-
-RUN go mod vendor
-RUN CGO_ENABLED=0 GOOS=$OS GOARCH=$ARCH go build -ldflags '-s -w' -o binary ./
+RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH GOARM=${TARGETVARIANT#v} \
+    go build -ldflags "-s -w -X main.version=$VERSION" -o binary ./
 
 FROM $IMAGE
 
