@@ -80,10 +80,10 @@ func collectMetrics(ctx context.Context, clients []*pihole.Client) {
 		select {
 		case result := <-results:
 			if result.err != nil {
-				log.Warnf("An error occurred while contacting %s: %+v\n", result.hostname, result.err)
+				log.Warnf("An error occurred while contacting %s: %v", result.hostname, result.err)
 			}
 		case <-ctx.Done():
-			log.Warnf("Metrics collection did not complete: %v\n", ctx.Err())
+			log.Warnf("Metrics collection did not complete: %v", ctx.Err())
 			return
 		}
 	}

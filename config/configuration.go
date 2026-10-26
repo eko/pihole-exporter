@@ -37,6 +37,7 @@ type EnvConfig struct {
 	Timeout             time.Duration `config:"timeout"`
 	SkipTLSVerification bool          `config:"skip_tls_verification"`
 	Debug               bool          `config:"debug"`
+	LogLevel            string        `config:"log_level"`
 }
 
 const (
@@ -55,6 +56,7 @@ func getDefaultEnvConfig() *EnvConfig {
 		Timeout:             DefaultTimeout,
 		SkipTLSVerification: false,
 		Debug:               false,
+		LogLevel:            "info",
 	}
 }
 
@@ -72,8 +74,6 @@ func Load() (*EnvConfig, []Config, error) {
 	if err != nil {
 		log.Fatalf("error returned when passing config into loader.Load(): %+v", err)
 	}
-
-	cfg.show()
 
 	if clientsConfig, err := cfg.Split(); err != nil {
 		return cfg, nil, err
@@ -227,7 +227,8 @@ func readPasswordFile(path string) (string, error) {
 	return password, nil
 }
 
-func (c EnvConfig) show() {
+// Show logs the configuration at debug level, without the passwords.
+func (c EnvConfig) Show() {
 	val := reflect.ValueOf(&c).Elem()
 	log.Debug("------------------------------------")
 	log.Debug("-  Pi-hole exporter configuration  -")
