@@ -3,10 +3,12 @@ package config
 import (
 	"context"
 	"fmt"
+	"os"
 	"reflect"
 	"runtime"
 	"strings"
 	"time"
+	"unicode"
 
 	log "github.com/sirupsen/logrus"
 
@@ -29,6 +31,7 @@ type EnvConfig struct {
 	PIHoleHostname      []string      `config:"pihole_hostname"`
 	PIHolePort          []uint16      `config:"pihole_port"`
 	PIHolePassword      []string      `config:"pihole_password"`
+	PIHolePasswordFile  []string      `config:"pihole_password_file"`
 	BindAddr            string        `config:"bind_addr"`
 	Port                uint16        `config:"port"`
 	Timeout             time.Duration `config:"timeout"`
@@ -46,6 +49,7 @@ func getDefaultEnvConfig() *EnvConfig {
 		PIHoleHostname:      []string{"127.0.0.1"},
 		PIHolePort:          []uint16{80},
 		PIHolePassword:      []string{},
+		PIHolePasswordFile:  []string{},
 		BindAddr:            "0.0.0.0",
 		Port:                9617,
 		Timeout:             DefaultTimeout,
@@ -108,6 +112,10 @@ func (c Config) Validate() error {
 }
 
 func (c EnvConfig) Split() ([]Config, error) {
+	if hasNonEmptyString(c.PIHolePassword) && hasNonEmptyString(c.PIHolePasswordFile) {
+		return nil, fmt.Errorf("cannot set both PIHOLE_PASSWORD and PIHOLE_PASSWORD_FILE")
+	}
+
 	hostsCount := len(c.PIHoleHostname)
 	result := make([]Config, 0, hostsCount)
 
@@ -136,6 +144,16 @@ func (c EnvConfig) Split() ([]Config, error) {
 			return nil, fmt.Errorf("wrong number of PIHolePassword: must be empty, single value or one per host")
 		}
 
+		if passwordFile, err := extractPasswordFilePath(c.PIHolePasswordFile, i, hostsCount); err != nil {
+			return nil, err
+		} else if passwordFile != "" {
+			password, err := readPasswordFile(passwordFile)
+			if err != nil {
+				return nil, err
+			}
+			config.PIHolePassword = password
+		}
+
 		result = append(result, config)
 	}
 
@@ -159,6 +177,54 @@ func extractStringConfig(data []string, idx int, hostsCount int) (bool, string, 
 
 	// Empty
 	return false, "", true
+}
+
+func hasNonEmptyString(data []string) bool {
+	for _, v := range data {
+		if strings.TrimSpace(v) != "" {
+			return true
+		}
+	}
+	return false
+}
+
+// extractPasswordFilePath resolves the PIHOLE_PASSWORD_FILE path for the host at idx,
+// following the same "empty, single value or one per host" rule as other list settings.
+// Unlike extractStringConfig, an explicitly provided but empty path is an error rather
+// than being treated as "not set".
+func extractPasswordFilePath(data []string, idx int, hostsCount int) (string, error) {
+	var raw string
+	switch {
+	case len(data) == 0:
+		return "", nil
+	case len(data) == 1:
+		raw = data[0]
+	case len(data) == hostsCount:
+		raw = data[idx]
+	default:
+		return "", fmt.Errorf("wrong number of PIHolePasswordFile: must be empty, single value or one per host")
+	}
+
+	path := strings.TrimSpace(raw)
+	if path == "" {
+		return "", fmt.Errorf("PIHOLE_PASSWORD_FILE contains an empty path")
+	}
+	return path, nil
+}
+
+// readPasswordFile reads the password/API token from path. Trailing whitespace (such as a
+// trailing newline added by editors or `echo`) is trimmed; internal whitespace is preserved.
+func readPasswordFile(path string) (string, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return "", fmt.Errorf("failed to read PIHOLE_PASSWORD_FILE %q: %w", path, err)
+	}
+
+	password := strings.TrimRightFunc(string(data), unicode.IsSpace)
+	if password == "" {
+		return "", fmt.Errorf("PIHOLE_PASSWORD_FILE %q is empty", path)
+	}
+	return password, nil
 }
 
 func (c EnvConfig) show() {
