@@ -2,15 +2,12 @@ package pihole
 
 import (
 	"fmt"
-	"net/http"
 
 	log "github.com/sirupsen/logrus"
 
 	"github.com/eko/pihole-exporter/config"
 	"github.com/eko/pihole-exporter/internal/metrics"
 )
-
-type ClientStatus byte
 
 type AuthenticationResponse struct {
 	Session struct {
@@ -23,35 +20,10 @@ type AuthenticationResponse struct {
 	} `json:"session"`
 }
 
-const (
-	MetricsCollectionInProgress ClientStatus = iota
-	MetricsCollectionSuccess
-	MetricsCollectionError
-	MetricsCollectionTimeout
-)
-
-func (status ClientStatus) String() string {
-	return []string{"MetricsCollectionInProgress", "MetricsCollectionSuccess", "MetricsCollectionError", "MetricsCollectionTimeout"}[status]
-}
-
-type ClientChannel struct {
-	Status ClientStatus
-	Err    error
-}
-
-func (c *ClientChannel) String() string {
-	if c.Err != nil {
-		return fmt.Sprintf("ClientChannel<Status: %s, Err: '%s'>", c.Status, c.Err.Error())
-	} else {
-		return fmt.Sprintf("ClientChannel<Status: %s, Err: <nil>>", c.Status)
-	}
-}
-
 // Client struct is a Pi-hole client to request an instance of a Pi-hole ad blocker.
 type Client struct {
 	apiClient APIClient
 	config    *config.Config
-	Status    chan *ClientChannel
 }
 
 // NewClient method initializes a new Pi-hole client.
@@ -66,7 +38,6 @@ func NewClient(config *config.Config, envConfig *config.EnvConfig) *Client {
 	return &Client{
 		config:    config,
 		apiClient: *NewAPIClient(fmt.Sprintf("%s://%s:%d", config.PIHoleProtocol, config.PIHoleHostname, config.PIHolePort), config.PIHolePassword, envConfig.Timeout, envConfig.SkipTLSVerification),
-		Status:    make(chan *ClientChannel, 1),
 	}
 }
 
@@ -74,18 +45,8 @@ func (c *Client) String() string {
 	return c.config.PIHoleHostname
 }
 
-func (c *Client) CollectMetricsAsync(writer http.ResponseWriter, request *http.Request) {
-	log.Debugf("Collecting from %s", c.config.PIHoleHostname)
-	if stats, blockedDomains, permittedDomains, clients, upstreams, piHoleStatus, err := c.getStatistics(); err == nil {
-		c.setMetrics(stats, blockedDomains, permittedDomains, clients, upstreams, piHoleStatus)
-		c.Status <- &ClientChannel{Status: MetricsCollectionSuccess, Err: nil}
-		log.Debugf("New tick of statistics from %s: %s", c.config.PIHoleHostname, stats)
-	} else {
-		c.Status <- &ClientChannel{Status: MetricsCollectionError, Err: err}
-	}
-}
-
-func (c *Client) CollectMetrics(writer http.ResponseWriter, request *http.Request) error {
+// CollectMetrics fetches the Pi-hole statistics and updates the exported metrics.
+func (c *Client) CollectMetrics() error {
 	stats, blockedDomains, permittedDomains, clients, upstreams, piHoleStatus, err := c.getStatistics()
 	if err != nil {
 		return err
@@ -204,14 +165,6 @@ func (c *Client) getStatistics() (*StatsSummary, *TopDomains, *TopDomains, *[]Pi
 
 // Close cleans up resources used by the client
 func (c *Client) Close() {
-	// Drain the status channel if needed
-	select {
-	case <-c.Status:
-		// Channel had something, now it's drained
-	default:
-		// Channel was already empty
-	}
-
 	log.Debugf("Closing client %s", c.config.PIHoleHostname)
 	c.apiClient.Close() // Close the API client
 }
