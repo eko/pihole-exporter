@@ -32,14 +32,23 @@ You can download the latest version of the binary built for your architecture he
   [Linux](https://github.com/eko/pihole-exporter/releases/latest/download/pihole_exporter-linux-amd64) /
   [Windows](https://github.com/eko/pihole-exporter/releases/latest/download/pihole_exporter-windows-amd64.exe)
   ]
-- Architecture **arm** [
+- Architecture **arm64** [
   [Darwin](https://github.com/eko/pihole-exporter/releases/latest/download/pihole_exporter-darwin-arm64) /
-  [Linux](https://github.com/eko/pihole-exporter/releases/latest/download/pihole_exporter-linux-arm)
+  [Linux](https://github.com/eko/pihole-exporter/releases/latest/download/pihole_exporter-linux-arm64)
   ]
+- Architecture **arm** (32-bit) [
+  [Linux ARMv7](https://github.com/eko/pihole-exporter/releases/latest/download/pihole_exporter-linux-armv7) (Raspberry Pi 2 and newer) /
+  [Linux ARMv6](https://github.com/eko/pihole-exporter/releases/latest/download/pihole_exporter-linux-armv6) (Raspberry Pi 1 and Zero)
+  ]
+
+Each binary comes with a `.sha256.txt` checksum file. Run `./pihole_exporter -version` to print the version.
 
 ### Using Docker
 
-The exporter is also available as a [Docker image](https://hub.docker.com/r/ekofr/pihole-exporter).
+The exporter is also available as a [Docker image](https://hub.docker.com/r/ekofr/pihole-exporter)
+for `linux/386`, `linux/amd64`, `linux/arm/v6`, `linux/arm/v7` and `linux/arm64`.
+The `latest` tag points to the latest release, and `master` to the current development version.
+
 You can run it using the following example and pass configuration environment variables:
 
 ```
@@ -51,45 +60,32 @@ $ docker run \
   ekofr/pihole-exporter:latest
 ```
 
-Or use PiHole's `WEBPASSWORD` as an API token instead of the password
+`PIHOLE_PASSWORD` is either your Pi-hole web interface password or an application password,
+which you can generate in the Pi-hole web interface under **Settings > Web interface / API**.
 
-```bash
-$ API_TOKEN=$(awk -F= -v key="WEBPASSWORD" '$1==key {print $2}' /etc/pihole/setupVars.conf)
-$ docker run \
-  -e 'PIHOLE_HOSTNAME=192.168.1.2' \
-  -e "PIHOLE_PASSWORD=$API_TOKEN" \
-  -e 'PORT=9617' \
-  -p 9617:9617 \
-  ekofr/pihole-exporter:latest
-```
+The container runs as a non-root user (UID/GID `65532`): files mounted into it, such as a
+`PIHOLE_PASSWORD_FILE`, must be readable by that user.
 
-If you are running pi-hole behind https, you must both set the `PIHOLE_PROTOCOL` environment variable
-as well as include your ssl certificates to the docker image as it does not have any baked in:
-
-```
-$ docker run \
-  -e 'PIHOLE_PROTOCOL=https' \
-  -e 'PIHOLE_HOSTNAME=192.168.1.2' \
-  -e 'PIHOLE_PASSWORD=mypassword' \
-  -e 'PORT=9617' \
-  -v '/etc/ssl/certs:/etc/ssl/certs:ro' \
-  -p 9617:9617 \
-  ekofr/pihole-exporter:latest
-```
-
-If you want to skip SSL certificate verification, pass in the following to either your Docker Compose file (-e) or the file holding environment variables (e.g. `.env`):
+If Pi-hole is served over HTTPS, set `PIHOLE_PROTOCOL=https` (and usually `PIHOLE_PORT=443`).
+The image ships the usual CA certificates, so certificates from a public CA work out of the box.
+For a self-signed certificate, either mount your CA into `/etc/ssl/certs` or skip the verification
+(do NOT do this on untrusted networks):
 
 ```text
 SKIP_TLS_VERIFICATION=true
 ```
+
+When the exporter and Pi-hole run in the same Docker network, `PIHOLE_HOSTNAME` is the Pi-hole
+container name and `PIHOLE_PORT` the port Pi-hole listens on inside its container (80 by default),
+not the port published on the host.
 
 A single instance of pihole-exporter can monitor multiple pi-holes instances.
 To do so, you can specify a list of hostnames, protocols, passwords/API tokens and ports by separating them with commas in their respective environment variable:
 
 ```
 $ docker run \
-  -e 'PIHOLE_PROTOCOL=http,http,http" \
-  -e 'PIHOLE_HOSTNAME=192.168.1.2,192.168.1.3,192.168.1.4"' \
+  -e 'PIHOLE_PROTOCOL=http,http,http' \
+  -e 'PIHOLE_HOSTNAME=192.168.1.2,192.168.1.3,192.168.1.4' \
   -e "PIHOLE_PASSWORD=$API_TOKEN1,$API_TOKEN2,$API_TOKEN3" \
   -e "PIHOLE_PORT=8080,8081,8080" \
   -e 'PORT=9617' \
@@ -101,8 +97,8 @@ If port, protocol and API token/password is the same for all instances, you can 
 
 ```
 $ docker run \
-  -e 'PIHOLE_PROTOCOL=http" \
-  -e 'PIHOLE_HOSTNAME=192.168.1.2,192.168.1.3,192.168.1.4"' \
+  -e 'PIHOLE_PROTOCOL=http' \
+  -e 'PIHOLE_HOSTNAME=192.168.1.2,192.168.1.3,192.168.1.4' \
   -e "PIHOLE_PASSWORD=$API_TOKEN" \
   -e "PIHOLE_PORT=8080" \
   -e 'PORT=9617' \
@@ -128,6 +124,25 @@ services:
       - "9617:9617"
 ```
 
+The image has no shell nor `wget`: to add a health check, use the exporter binary itself,
+as in the provided [docker-compose.yml](docker-compose.yml):
+
+```yaml
+    healthcheck:
+      test: ["CMD", "./pihole-exporter", "-healthcheck"]
+```
+
+All the Pi-hole instances are exported from the same `/metrics` endpoint, each series having a
+`hostname` label: Prometheus only needs to scrape the exporter once.
+
+### Kubernetes
+
+A [Helm chart](https://github.com/SiM22/pihole-exporter-helm-chart) is maintained by the community.
+
+If a Service named `pihole` exists in the same namespace, Kubernetes injects a `PIHOLE_PORT`
+environment variable such as `tcp://10.0.0.1:80` into the pod, which the exporter can't parse.
+Set `PIHOLE_PORT` explicitly, or set `enableServiceLinks: false` in the pod spec.
+
 ### From sources
 
 Optionally, you can download and build it from the sources. You have to retrieve the project sources by using one of the following way:
@@ -136,12 +151,6 @@ Optionally, you can download and build it from the sources. You have to retrieve
 $ go install github.com/eko/pihole-exporter@latest
 # or
 $ git clone https://github.com/eko/pihole-exporter.git
-```
-
-Install the needed vendors:
-
-```
-$ go mod vendor
 ```
 
 Then, build the binary (here, an example to run on Raspberry PI ARM architecture):
@@ -154,58 +163,22 @@ $ GOOS=linux GOARCH=arm GOARM=7 go build -o pihole_exporter .
 
 In order to run the exporter, type the following command (arguments are optional):
 
-Using a password
-
 ```bash
 $ ./pihole_exporter -pihole_hostname 192.168.1.10 -pihole_password azerty
 ```
 
-Or use PiHole's `WEBPASSWORD` as an API token instead of the password
+Every option can also be set with the matching upper-case environment variable, for example
+`PIHOLE_HOSTNAME` for `-pihole_hostname`.
 
-```bash
-$ API_TOKEN=$(awk -F= -v key="WEBPASSWORD" '$1==key {print $2}' /etc/pihole/setupVars.conf)
-$ ./pihole_exporter -pihole_hostname 192.168.1.10 -pihole_password $API_TOKEN
+#### Logging
+
+The log level is set with `LOG_LEVEL` or `-log_level` (`debug`, `info`, `warn`, `error`; `info` by default).
+`DEBUG=true` or `-debug` is a shortcut for the `debug` level. Info and debug logs are written to stdout,
+warnings and errors to stderr.
+
 ```
-
-#### Debug logging
-
-You can enable verbose output either by environment variable or CLI flag:
-
-Both options set logrus to `debug` level (shown below); otherwise the exporter logs at `info`.
-
-___
-
-```bash
-2019/05/09 20:19:52 ------------------------------------
-2019/05/09 20:19:52 -  Pi-hole exporter configuration  -
-2019/05/09 20:19:52 ------------------------------------
-2019/05/09 20:19:52 PIHoleHostname : 192.168.1.10
-2019/05/09 20:19:52 PIHolePassword : azerty
-2019/05/09 20:19:52 Port : 9617
-2019/05/09 20:19:52 Timeout : 5s
-2019/05/09 20:19:52 ------------------------------------
-2019/05/09 20:19:52 New Prometheus metric registered: domains_blocked
-2019/05/09 20:19:52 New Prometheus metric registered: dns_queries_today
-2019/05/09 20:19:52 New Prometheus metric registered: ads_blocked_today
-2019/05/09 20:19:52 New Prometheus metric registered: ads_percentag_today
-2019/05/09 20:19:52 New Prometheus metric registered: unique_domains
-2019/05/09 20:19:52 New Prometheus metric registered: queries_forwarded
-2019/05/09 20:19:52 New Prometheus metric registered: queries_cached
-2019/05/09 20:19:52 New Prometheus metric registered: clients_ever_seen
-2019/05/09 20:19:52 New Prometheus metric registered: unique_clients
-2019/05/09 20:19:52 New Prometheus metric registered: dns_queries_all_types
-2019/05/09 20:19:52 New Prometheus metric registered: reply
-2019/05/09 20:19:52 New Prometheus metric registered: top_queries
-2019/05/09 20:19:52 New Prometheus metric registered: top_ads
-2019/05/09 20:19:52 New Prometheus metric registered: top_sources
-2019/05/09 20:19:52 New Prometheus metric registered: forward_destinations
-2019/05/09 20:19:52 New Prometheus metric registered: querytypes
-2019/05/09 20:19:52 New Prometheus metric registered: status
-2019/05/09 20:19:52 New Prometheus metric registered: queries_last_10min
-2019/05/09 20:19:52 New Prometheus metric registered: ads_last_10min
-2019/05/09 20:19:52 Starting HTTP server
-2019/05/09 20:19:54 New tick of statistics: 648 ads blocked / 66796 total DNS queries
-...
+time="2026-10-26T21:43:53+01:00" level=info msg="starting pihole-exporter v1.3.0"
+time="2026-10-26T21:43:53+01:00" level=info msg="listening on 0.0.0.0:9617"
 ```
 
 Once the exporter is running, you also have to update your `prometheus.yml` configuration to let it scrape the exporter:
@@ -231,41 +204,43 @@ prometheus.scrape "pihole" {
 ## Available CLI options
 
 ```bash
-# Hostname of the host(s) where Pi-hole is installed
-  -pihole_hostname string (optional) (default "127.0.0.1")
+# Hostname(s) of the Pi-hole instance(s), comma-separated
+  -pihole_hostname value (default "127.0.0.1")
 
-# Password defined on the Pi-hole interface
-  -pihole_password string (optional)
+# Protocol(s) used to reach Pi-hole: http or https
+  -pihole_protocol value (default "http")
+
+# Port(s) of the Pi-hole web interface
+  -pihole_port value (default 80)
+
+# Password(s) or application password(s) of the Pi-hole web interface
+  -pihole_password value
+
+# File(s) containing the password(s), instead of -pihole_password
+  -pihole_password_file value
 
 # Timeout to connect and retrieve data from a Pi-hole instance
-  -timeout duration (optional) (default 5s)
+  -timeout duration (default 5s)
 
-# WEBPASSWORD / api token defined on the Pi-hole interface at `/etc/pihole/setupVars.conf`
-  -pihole_password string (optional)
+# Address and port the exporter listens on
+  -bind_addr string (default "0.0.0.0")
+  -port uint (default 9617)
 
-# Address to be used for the exporter
-  -bind_addr string (optional) (default "0.0.0.0")
+# Accept any certificate and skip hostname checks: do NOT use on untrusted networks!
+  -skip_tls_verification
 
-# URL Context (first segments of URL path) to the PI-hole admin application
-  -pihole_admin_context string (optional) (default "admin")
+# Log level: debug, info, warn or error
+  -log_level string (default "info")
 
-# Port to be used for the exporter
-  -port string (optional) (default "9617")
-
-# Disabling TLS verification
-  disabling TLS verification accepts any certificate 
-    and skips hostname checks - 
-    do NOT use on untrusted networks!!
-
-  -skip_tls_verification true
-
-# Enable debug (verbose) output
+# Shortcut for -log_level debug
   -debug
+
+# Print the version and exit (must be the first argument)
+  -version
+
+# Check that a running exporter answers, for container health checks (must be the first argument)
+  -healthcheck
 ```
-
-
-
-
 
 ## Available Prometheus metrics
 
@@ -285,14 +260,10 @@ prometheus.scrape "pihole" {
 |      pihole_top_queries      | This represent the number of top queries made by Pi-hole by domain                        |
 |        pihole_top_ads        | This represent the number of top ads made by Pi-hole by domain                            |
 |      pihole_top_sources      | This represent the number of top sources requests made by Pi-hole by source host          |
+|  pihole_top_sources_blocked  | This represent the number of blocked queries made by the top blocked source hosts         |
 | pihole_forward_destinations  | This represent the number of forward destinations requests made by Pi-hole by destination |
+| pihole_forward_destinations_responsetime | This represent the average response time of each forward destination, in seconds |
+| pihole_forward_destinations_responsevariance | This represent the variance of the response time of each forward destination |
+|     pihole_request_rate      | This represent the number of DNS queries per second                                       |
 |      pihole_querytypes       | This represent the number of queries made by Pi-hole by type                              |
-|        pihole_status         | This represent if Pi-hole is enabled                                                      |
-|      queries_last_10min      | This represent the number of queries in the last full slot of 10 minutes                  |
-|        ads_last_10min        | This represent the number of ads in the last full slot of 10 minutes                      |
-
-## Pihole-Exporter Helm Chart
-
-[Link](https://github.com/SiM22/pihole-exporter-helm-chart)
-
-This is a simple Helm Chart to deploy the exporter in a kubernetes cluster.
+|        pihole_status         | This represent if Pi-hole blocking is enabled (1) or disabled (0)                         |
