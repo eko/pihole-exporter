@@ -12,7 +12,7 @@ services:
         max-size: "5k"
         max-file: "5"
     healthcheck:
-      test: ["CMD", "wget", "--tries=1", "--spider", "http://localhost:9617/metrics"]
+      test: ["CMD", "./pihole-exporter", "-healthcheck"]
       interval: 300s
       retries: 5
       timeout: 10s

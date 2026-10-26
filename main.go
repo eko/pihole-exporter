@@ -2,7 +2,10 @@ package main
 
 import (
 	"errors"
+	"fmt"
+	"net"
 	"net/http"
+	"strconv"
 
 	log "github.com/sirupsen/logrus"
 
@@ -13,17 +16,33 @@ import (
 	"github.com/xonvanetta/shutdown/pkg/shutdown"
 )
 
+// version is set at build time with -ldflags "-X main.version=...".
+var version = "dev"
+
 func main() {
-	log.SetFormatter(&log.TextFormatter{FullTimestamp: true})
+	mode := takeMode()
+	if mode == modeVersion {
+		fmt.Printf("pihole-exporter %s\n", version)
+		return
+	}
+
 	envConf, clientConfigs, err := config.Load()
 	if err != nil {
 		log.Fatalf("failed to load configuration: %v", err)
 	}
-	if envConf.Debug {
-		log.SetLevel(log.DebugLevel)
+	if err := setupLogging(envConf.LogLevel, envConf.Debug); err != nil {
+		log.Fatalf("failed to set up logging: %v", err)
 	}
 
-	log.Infof("starting pihole-exporter")
+	if mode == modeHealthcheck {
+		if err := healthcheck(envConf); err != nil {
+			log.Fatalf("healthcheck failed: %v", err)
+		}
+		return
+	}
+
+	envConf.Show()
+	log.Infof("starting pihole-exporter %s", version)
 
 	metrics.Init()
 
@@ -40,6 +59,7 @@ func main() {
 		srv.Stop()
 	}()
 
+	log.Infof("listening on %s", net.JoinHostPort(envConf.BindAddr, strconv.Itoa(int(envConf.Port))))
 	if err := srv.ListenAndServe(); err != nil {
 		// Ignore the expected error when the server is closed gracefully.
 		if !errors.Is(err, http.ErrServerClosed) {
