@@ -77,6 +77,12 @@ $ docker run \
   ekofr/pihole-exporter:latest
 ```
 
+If you want to skip SSL certificate verification, pass in the following to either your Docker Compose file (-e) or the file holding environment variables (e.g. `.env`):
+
+```text
+SKIP_TLS_VERIFICATION=true
+```
+
 A single instance of pihole-exporter can monitor multiple pi-holes instances.
 To do so, you can specify a list of hostnames, protocols, passwords/API tokens and ports by separating them with commas in their respective environment variable:
 
@@ -102,6 +108,24 @@ $ docker run \
   -e 'PORT=9617' \
   -p 9617:9617 \
   ekofr/pihole-exporter:latest
+```
+
+Instead of putting the password/API token directly in an environment variable, you can point
+`PIHOLE_PASSWORD_FILE` at a file (e.g. a Docker/Kubernetes secret) containing it. `PIHOLE_PASSWORD_FILE`
+follows the same comma-separated rule as `PIHOLE_PASSWORD`: give it a single path to use for every host,
+or one path per host. It cannot be combined with a non-empty `PIHOLE_PASSWORD`. Mount the secret read-only:
+
+```yaml
+services:
+  pihole-exporter:
+    image: ekofr/pihole-exporter:latest
+    environment:
+      PIHOLE_HOSTNAME: 192.168.1.2
+      PIHOLE_PASSWORD_FILE: /run/secrets/pihole_password
+    volumes:
+      - ./secrets/pihole_password.txt:/run/secrets/pihole_password:ro
+    ports:
+      - "9617:9617"
 ```
 
 ### From sources
