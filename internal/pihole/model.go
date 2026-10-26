@@ -3,9 +3,9 @@ package pihole
 import "fmt"
 
 type BlockingStatus struct {
-	Blocking string  `json:"blocking"`
-	Timer    int     `json:"timer"`
-	Took     float64 `json:"took"`
+	Blocking string   `json:"blocking"`
+	Timer    *float64 `json:"timer"` // seconds until the blocking mode changes, null when no timer is set
+	Took     float64  `json:"took"`
 }
 
 type Upstreams struct {
