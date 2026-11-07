@@ -267,3 +267,5 @@ prometheus.scrape "pihole" {
 |     pihole_request_rate      | This represent the number of DNS queries per second                                       |
 |      pihole_querytypes       | This represent the number of queries made by Pi-hole by type                              |
 |        pihole_status         | This represent if Pi-hole blocking is enabled (1) or disabled (0)                         |
+|  pihole_queries_last_10min   | This represent the number of queries in the last full slot of 10 minutes                  |
+|    pihole_ads_last_10min     | This represent the number of ads in the last full slot of 10 minutes                      |
