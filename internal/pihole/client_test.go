@@ -1,6 +1,7 @@
 package pihole_test
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -126,4 +127,25 @@ func TestCollectMetricsTopSourcesBlocked(t *testing.T) {
 
 	assert.Equal(t, 7.0, testutil.ToFloat64(metrics.TopSourcesBlocked.WithLabelValues(client.GetHostname(), "10.0.0.2", "tv")))
 	assert.Equal(t, 27.0, testutil.ToFloat64(metrics.TopSources.WithLabelValues(client.GetHostname(), "10.0.0.2", "tv")))
+}
+
+func TestCollectMetricsLast10min(t *testing.T) {
+	// Slots are 10 minutes long and timestamped in their middle. Pi-hole returns
+	// the slot in progress and, right before its garbage collection, the next one.
+	now := time.Now().Unix()
+	current := now - now%600 + 300
+	history := fmt.Sprintf(`{"history":[
+		{"timestamp":%d,"total":10,"blocked":1},
+		{"timestamp":%d,"total":20,"blocked":2},
+		{"timestamp":%d,"total":5,"blocked":1},
+		{"timestamp":%d,"total":0,"blocked":0}
+	]}`, current-1200, current-600, current, current+600)
+
+	fake := &statsPihole{responses: map[string]string{"/api/history": history}}
+	client := newStatsClient(t, fake)
+
+	require.NoError(t, client.CollectMetrics())
+
+	assert.Equal(t, 20.0, testutil.ToFloat64(metrics.QueriesLast10min.WithLabelValues(client.GetHostname())))
+	assert.Equal(t, 2.0, testutil.ToFloat64(metrics.AdsLast10min.WithLabelValues(client.GetHostname())))
 }
