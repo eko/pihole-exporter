@@ -2,7 +2,7 @@ ARG IMAGE=scratch
 
 # The builder always runs on the build machine's platform and cross-compiles
 # for the target platform, so multi-arch builds don't need emulation.
-FROM --platform=$BUILDPLATFORM golang:1.27.3-alpine3.24 AS builder
+FROM --platform=$BUILDPLATFORM golang:1.27.4-alpine3.24 AS builder
 
 ARG TARGETOS
 ARG TARGETARCH
