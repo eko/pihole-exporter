@@ -2,6 +2,7 @@ package pihole
 
 import (
 	"fmt"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 
@@ -56,6 +57,7 @@ type statistics struct {
 	blockedClients   []PiHoleClient
 	upstreams        Upstreams
 	blocking         BlockingStatus
+	history          History
 }
 
 // CollectMetrics fetches the Pi-hole statistics and updates the exported metrics.
@@ -150,6 +152,11 @@ func (c *Client) setMetrics(stats *statistics) {
 	for queryType, value := range summary.Queries.Types {
 		metrics.QueryTypes.WithLabelValues(hostname, queryType).Set(value)
 	}
+
+	if slot, ok := stats.history.LastFullSlot(time.Now()); ok {
+		metrics.QueriesLast10min.WithLabelValues(hostname).Set(float64(slot.Total))
+		metrics.AdsLast10min.WithLabelValues(hostname).Set(float64(slot.Blocked))
+	}
 }
 
 func (c *Client) getStatistics() (*statistics, error) {
@@ -169,6 +176,7 @@ func (c *Client) getStatistics() (*statistics, error) {
 		{"/api/stats/top_clients?blocked=false&count=10", &permittedClients, "permitted clients"},
 		{"/api/stats/upstreams", &stats.upstreams, "upstream stats"},
 		{"/api/dns/blocking", &stats.blocking, "status"},
+		{"/api/history", &stats.history, "history"},
 	}
 	for _, fetch := range fetches {
 		if err := c.apiClient.FetchData(fetch.endpoint, fetch.result); err != nil {

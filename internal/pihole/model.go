@@ -1,6 +1,38 @@
 package pihole
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
+
+type HistorySlot struct {
+	Timestamp float64 `json:"timestamp"` // middle of the 10 minutes slot
+	Total     int     `json:"total"`
+	Cached    int     `json:"cached"`
+	Blocked   int     `json:"blocked"`
+	Forwarded int     `json:"forwarded"`
+}
+
+type History struct {
+	History []HistorySlot `json:"history"`
+	Took    float64       `json:"took"`
+}
+
+// LastFullSlot returns the latest 10 minutes slot that is already over.
+// Pi-hole also returns the slot in progress, and for the minute before each
+// of its garbage collections the next (empty) one too, so we can't just take
+// the second to last one.
+func (h *History) LastFullSlot(now time.Time) (HistorySlot, bool) {
+	var last HistorySlot
+	found := false
+	for _, slot := range h.History {
+		end := slot.Timestamp + 5*60
+		if end <= float64(now.Unix()) && (!found || slot.Timestamp > last.Timestamp) {
+			last, found = slot, true
+		}
+	}
+	return last, found
+}
 
 type BlockingStatus struct {
 	Blocking string   `json:"blocking"`
