@@ -25,9 +25,13 @@ type AuthenticationResponse struct {
 
 // Client struct is a Pi-hole client to request an instance of a Pi-hole ad blocker.
 type Client struct {
-	apiClient APIClient
-	config    *config.Config
+	apiClient       APIClient
+	config          *config.Config
+	topClientsCount uint16
 }
+
+// defaultTopClientsCount is the number of clients fetched when none is configured.
+const defaultTopClientsCount = 10
 
 // NewClient method initializes a new Pi-hole client.
 func NewClient(config *config.Config, envConfig *config.EnvConfig) *Client {
@@ -38,9 +42,15 @@ func NewClient(config *config.Config, envConfig *config.EnvConfig) *Client {
 
 	log.Debugf("Creating client for host %s with protocol %s and port %d", config.PIHoleHostname, config.PIHoleProtocol, config.PIHolePort)
 
+	topClientsCount := envConfig.TopClientsCount
+	if topClientsCount == 0 {
+		topClientsCount = defaultTopClientsCount
+	}
+
 	return &Client{
-		config:    config,
-		apiClient: *NewAPIClient(fmt.Sprintf("%s://%s:%d", config.PIHoleProtocol, config.PIHoleHostname, config.PIHolePort), config.PIHolePassword, envConfig.Timeout, envConfig.SkipTLSVerification),
+		config:          config,
+		apiClient:       *NewAPIClient(fmt.Sprintf("%s://%s:%d", config.PIHoleProtocol, config.PIHoleHostname, config.PIHolePort), config.PIHolePassword, envConfig.Timeout, envConfig.SkipTLSVerification),
+		topClientsCount: topClientsCount,
 	}
 }
 
@@ -161,7 +171,9 @@ func (c *Client) setMetrics(stats *statistics) {
 
 func (c *Client) getStatistics() (*statistics, error) {
 	var stats statistics
-	var permittedClients TopClients
+	// Pi-hole counts all the queries of a client in the blocked=false list,
+	// blocked ones included.
+	var allClients TopClients
 	var blockedClients TopClients
 
 	fetches := []struct {
@@ -172,8 +184,8 @@ func (c *Client) getStatistics() (*statistics, error) {
 		{"/api/stats/summary", &stats.summary, "stats summary"},
 		{"/api/stats/top_domains?blocked=true&count=10", &stats.blockedDomains, "blocked domains"},
 		{"/api/stats/top_domains?blocked=false&count=10", &stats.permittedDomains, "permitted domains"},
-		{"/api/stats/top_clients?blocked=true&count=10", &blockedClients, "blocked clients"},
-		{"/api/stats/top_clients?blocked=false&count=10", &permittedClients, "permitted clients"},
+		{fmt.Sprintf("/api/stats/top_clients?blocked=true&count=%d", c.topClientsCount), &blockedClients, "blocked clients"},
+		{fmt.Sprintf("/api/stats/top_clients?blocked=false&count=%d", c.topClientsCount), &allClients, "clients"},
 		{"/api/stats/upstreams", &stats.upstreams, "upstream stats"},
 		{"/api/dns/blocking", &stats.blocking, "status"},
 		{"/api/history", &stats.history, "history"},
@@ -184,7 +196,7 @@ func (c *Client) getStatistics() (*statistics, error) {
 		}
 	}
 
-	stats.clients = MergeClients(permittedClients.Clients, blockedClients.Clients)
+	stats.clients = allClients.Clients
 	stats.blockedClients = blockedClients.Clients
 	return &stats, nil
 }

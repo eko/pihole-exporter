@@ -38,6 +38,7 @@ type EnvConfig struct {
 	SkipTLSVerification bool          `config:"skip_tls_verification"`
 	Debug               bool          `config:"debug"`
 	LogLevel            string        `config:"log_level"`
+	TopClientsCount     uint16        `config:"top_clients_count"`
 }
 
 const (
@@ -57,6 +58,7 @@ func getDefaultEnvConfig() *EnvConfig {
 		SkipTLSVerification: false,
 		Debug:               false,
 		LogLevel:            "info",
+		TopClientsCount:     10,
 	}
 }
 

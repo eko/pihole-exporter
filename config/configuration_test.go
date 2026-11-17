@@ -299,6 +299,7 @@ func TestZLoadConfigWithFlags(t *testing.T) {
 			SkipTLSVerification: true,
 			Debug:               true,
 			LogLevel:            "info",
+			TopClientsCount:     10,
 		},
 		expectedNumClient: 1,
 		expectedClients: []Config{
@@ -374,6 +375,7 @@ func TestLoadConfigEnvVars(t *testing.T) {
 		SkipTLSVerification: true,
 		Debug:               true,
 		LogLevel:            "info",
+		TopClientsCount:     10,
 	}
 	expectedClients := []Config{
 		{PIHoleProtocol: "https", PIHoleHostname: "env.pi.hole", PIHolePort: 8443, PIHolePassword: "env_secret"},
@@ -412,6 +414,7 @@ func TestLoadConfigDefaults(t *testing.T) {
 		os.Unsetenv("PIHOLE_PASSWORD")
 		os.Unsetenv("PIHOLE_PASSWORD_FILE")
 		os.Unsetenv("LOG_LEVEL")
+		os.Unsetenv("TOP_CLIENTS_COUNT")
 		os.Unsetenv("BIND_ADDR")
 		os.Unsetenv("PORT")
 		os.Unsetenv("TIMEOUT")
@@ -435,6 +438,7 @@ func TestLoadConfigDefaults(t *testing.T) {
 			SkipTLSVerification: false,
 			Debug:               false,
 			LogLevel:            "info",
+			TopClientsCount:     10,
 		}
 
 		expectedClients := []Config{

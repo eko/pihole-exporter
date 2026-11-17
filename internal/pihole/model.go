@@ -143,32 +143,3 @@ type StatsSummary struct {
 func (s *StatsSummary) String() string {
 	return fmt.Sprintf("%d ads blocked / %d total DNS queries", s.Queries.Blocked, s.Queries.Total)
 }
-
-func MergeClients(clients1, clients2 []PiHoleClient) []PiHoleClient {
-	clientMap := make(map[string]PiHoleClient)
-
-	// Function to add clients to the map
-	addClients := func(clients []PiHoleClient) {
-		for _, client := range clients {
-			key := client.IP // or client.Name if IPs are not unique
-			if existing, found := clientMap[key]; found {
-				existing.Count += client.Count
-				clientMap[key] = existing
-			} else {
-				clientMap[key] = client
-			}
-		}
-	}
-
-	// Add both arrays
-	addClients(clients1)
-	addClients(clients2)
-
-	// Convert map back to slice
-	mergedClients := make([]PiHoleClient, 0, len(clientMap))
-	for _, client := range clientMap {
-		mergedClients = append(mergedClients, client)
-	}
-
-	return mergedClients
-}

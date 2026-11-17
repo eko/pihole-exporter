@@ -222,6 +222,10 @@ prometheus.scrape "pihole" {
 # Timeout to connect and retrieve data from a Pi-hole instance
   -timeout duration (default 5s)
 
+# Number of clients exported in pihole_top_sources and pihole_top_sources_blocked.
+# Raise it above your number of clients to export all of them.
+  -top_clients_count uint (default 10)
+
 # Address and port the exporter listens on
   -bind_addr string (default "0.0.0.0")
   -port uint (default 9617)
@@ -259,7 +263,7 @@ prometheus.scrape "pihole" {
 |         pihole_reply         | This represent the number of replies made for all types                                   |
 |      pihole_top_queries      | This represent the number of top queries made by Pi-hole by domain                        |
 |        pihole_top_ads        | This represent the number of top ads made by Pi-hole by domain                            |
-|      pihole_top_sources      | This represent the number of top sources requests made by Pi-hole by source host          |
+|      pihole_top_sources      | This represent the number of queries made by the top source hosts, blocked ones included  |
 |  pihole_top_sources_blocked  | This represent the number of blocked queries made by the top blocked source hosts         |
 | pihole_forward_destinations  | This represent the number of forward destinations requests made by Pi-hole by destination |
 | pihole_forward_destinations_responsetime | This represent the average response time of each forward destination, in seconds |
