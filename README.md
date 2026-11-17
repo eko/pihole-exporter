@@ -143,6 +143,20 @@ If a Service named `pihole` exists in the same namespace, Kubernetes injects a `
 environment variable such as `tcp://10.0.0.1:80` into the pod, which the exporter can't parse.
 Set `PIHOLE_PORT` explicitly, or set `enableServiceLinks: false` in the pod spec.
 
+The `hostname` label is the address the exporter connects to (`PIHOLE_HOSTNAME`). When the exporter
+runs as a sidecar and connects to the pod IP, that label changes on every restart. Give it a stable
+value when scraping, for example in a Prometheus Operator `PodMonitor`:
+
+```yaml
+podMetricsEndpoints:
+  - port: prometheus
+    metricRelabelings:
+      - sourceLabels: [__name__]
+        regex: pihole_.+
+        targetLabel: hostname
+        replacement: pihole-01
+```
+
 ### From sources
 
 Optionally, you can download and build it from the sources. You have to retrieve the project sources by using one of the following way:
