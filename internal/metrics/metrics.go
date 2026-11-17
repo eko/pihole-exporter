@@ -151,7 +151,7 @@ var (
 		prometheus.GaugeOpts{
 			Name:      "top_sources",
 			Namespace: "pihole",
-			Help:      "This represent the number of top sources requests made by Pi-hole by source host",
+			Help:      "This represent the number of queries made by the top source hosts, blocked ones included",
 		},
 		[]string{"hostname", "source", "source_name"},
 	)

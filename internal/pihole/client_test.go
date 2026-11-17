@@ -54,6 +54,15 @@ func newStatsClient(
 	fake *statsPihole,
 ) *pihole.Client {
 	t.Helper()
+	return newStatsClientWithConfig(t, fake, config.EnvConfig{})
+}
+
+func newStatsClientWithConfig(
+	t *testing.T,
+	fake *statsPihole,
+	envConfig config.EnvConfig,
+) *pihole.Client {
+	t.Helper()
 	srv := httptest.NewServer(fake)
 	t.Cleanup(srv.Close)
 
@@ -62,9 +71,10 @@ func newStatsClient(
 	port, err := strconv.Atoi(u.Port())
 	require.NoError(t, err)
 
+	envConfig.Timeout = time.Second
 	return pihole.NewClient(
 		&config.Config{PIHoleProtocol: "http", PIHoleHostname: u.Hostname(), PIHolePort: uint16(port), PIHolePassword: "x"},
-		&config.EnvConfig{Timeout: time.Second},
+		&envConfig,
 	)
 }
 
@@ -116,17 +126,55 @@ func TestCollectMetricsDropsStaleTopEntries(t *testing.T) {
 	assert.Equal(t, 5.0, testutil.ToFloat64(metrics.TopAds.WithLabelValues(client.GetHostname(), "new.example")))
 }
 
-func TestCollectMetricsTopSourcesBlocked(t *testing.T) {
-	fake := &statsPihole{responses: map[string]string{
-		"/api/stats/top_clients?blocked=true&count=10":  `{"clients":[{"ip":"10.0.0.2","name":"tv","count":7}]}`,
-		"/api/stats/top_clients?blocked=false&count=10": `{"clients":[{"ip":"10.0.0.2","name":"tv","count":20}]}`,
-	}}
-	client := newStatsClient(t, fake)
+func TestCollectMetricsTopSources(t *testing.T) {
+	testCases := []struct {
+		name        string
+		envConfig   config.EnvConfig
+		count       string
+		wantSources map[string]float64
+		wantBlocked map[string]float64
+	}{
+		{
+			name:  "default count",
+			count: "10",
+			// The laptop is in both lists, the phone only in the blocked one.
+			wantSources: map[string]float64{"laptop": 2900, "tv": 50},
+			wantBlocked: map[string]float64{"laptop": 426, "phone": 3},
+		},
+		{
+			name:        "configured count",
+			envConfig:   config.EnvConfig{TopClientsCount: 50},
+			count:       "50",
+			wantSources: map[string]float64{"laptop": 2900, "tv": 50},
+			wantBlocked: map[string]float64{"laptop": 426, "phone": 3},
+		},
+	}
 
-	require.NoError(t, client.CollectMetrics())
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			metrics.TopSources.Reset()
+			metrics.TopSourcesBlocked.Reset()
 
-	assert.Equal(t, 7.0, testutil.ToFloat64(metrics.TopSourcesBlocked.WithLabelValues(client.GetHostname(), "10.0.0.2", "tv")))
-	assert.Equal(t, 27.0, testutil.ToFloat64(metrics.TopSources.WithLabelValues(client.GetHostname(), "10.0.0.2", "tv")))
+			fake := &statsPihole{responses: map[string]string{
+				"/api/stats/top_clients?blocked=false&count=" + testCase.count: `{"clients":[` +
+					`{"ip":"10.0.0.2","name":"laptop","count":2900},{"ip":"10.0.0.3","name":"tv","count":50}]}`,
+				"/api/stats/top_clients?blocked=true&count=" + testCase.count: `{"clients":[` +
+					`{"ip":"10.0.0.2","name":"laptop","count":426},{"ip":"10.0.0.4","name":"phone","count":3}]}`,
+			}}
+			client := newStatsClientWithConfig(t, fake, testCase.envConfig)
+
+			require.NoError(t, client.CollectMetrics())
+
+			ips := map[string]string{"laptop": "10.0.0.2", "tv": "10.0.0.3", "phone": "10.0.0.4"}
+			for name, want := range testCase.wantSources {
+				assert.Equal(t, want, testutil.ToFloat64(metrics.TopSources.WithLabelValues(client.GetHostname(), ips[name], name)), name)
+			}
+			for name, want := range testCase.wantBlocked {
+				assert.Equal(t, want, testutil.ToFloat64(metrics.TopSourcesBlocked.WithLabelValues(client.GetHostname(), ips[name], name)), name)
+			}
+			assert.Equal(t, len(testCase.wantSources), testutil.CollectAndCount(metrics.TopSources))
+		})
+	}
 }
 
 func TestCollectMetricsLast10min(t *testing.T) {
